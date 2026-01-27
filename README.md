@@ -115,10 +115,25 @@ pyinstaller --noconfirm --onedir --windowed --name "EnViT5_Translator" \
 ### 6. Cấu trúc Project
 
 ```plaintext
-EnViT5_Project/
-├── main.py                # File chạy duy nhất
-├── model_envit5_fast/     # Chứa model.bin, spiece.model
-├── Tesseract-OCR/         # Chứa tesseract.exe và tessdata/
-├── .env                   # Chứa HF_TOKEN (nếu cần)
-└── requirements.txt       # Danh sách thư viện
+translate2/
+├── main.py                # File chạy chính
+├── main_window.py         # Giao diện chính PyQt5
+├── engine.py              # Xử lý dịch và logic AI
+├── ocr_utils.py           # Tiện ích OCR (Tesseract)
+├── ui_components.py       # Các thành phần giao diện phụ trợ
+├── config.py              # Cấu hình chung
+├── main.spec              # File cấu hình đóng gói PyInstaller
+├── requirements.txt       # Danh sách thư viện Python
+├── README.md              # Tài liệu hướng dẫn
+├── build/                 # Thư mục build của PyInstaller
+├── __pycache__/           # Thư mục cache Python
+├── model_envit5_fast/     # Chứa model AI (config.json, shared_vocabulary.json, spiece.model)
+├── Tesseract-OCR/         # Chứa tesseract.exe, tessdata/ và các file OCR
+│   └── tessdata/          # Dữ liệu ngôn ngữ cho Tesseract (eng.traineddata, vie.traineddata, ...)
+└── ...                    # Các file/thư mục khác nếu có
 ```
+
+> **Lưu ý:**
+>
+> - Đảm bảo các thư mục `model_envit5_fast` và `Tesseract-OCR` nằm cùng cấp với file thực thi `.exe` hoặc `main.py` khi chạy hoặc đóng gói.
+> - Thư mục `build/` và `__pycache__/` được tạo tự động, không cần quan tâm khi sử dụng thông thường.
