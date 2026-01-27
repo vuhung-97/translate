@@ -1,0 +1,78 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+env/
+venv/
+build/
+dist/
+*.egg-info/
+.eggs/
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# mypy
+.mypy_cache/
+.dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# VS Code
+.vscode/
+
+# MacOS
+.DS_Store
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Tesseract-OCR build artifacts
+Tesseract-OCR/*.html
+Tesseract-OCR/doc/
+Tesseract-OCR/tessdata/configs/
+Tesseract-OCR/tessdata/script/
+Tesseract-OCR/tessdata/tessconfigs/
+
+
+
+# Logs
+*.log
+
+# Misc
+*.bak
+*.tmp
+~$*
+
+# Ignore build and dist folders
+build/
+dist/

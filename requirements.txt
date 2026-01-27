@@ -1,0 +1,11 @@
+ctranslate2==4.6.3
+numpy==2.4.1
+opencv_python==4.13.0.90
+Pillow==12.1.0
+psutil==7.2.1
+PyQt5==5.15.11
+pyqt5_sip==12.18.0
+pytesseract==0.3.13
+python-dotenv==1.2.1
+sentencepiece==0.2.1
+pipreqs==0.4.13
