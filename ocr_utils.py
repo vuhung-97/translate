@@ -3,19 +3,17 @@ import numpy as np
 import pytesseract
 import os
 import re
-from typing import Optional
-from config import TESSERACT_FOLDER # Đảm bảo file config.py có định nghĩa này
+from config import TESSERACT_EXE, TESSDATA_DIR
 
 # ================================================================
 # 1. CẤU HÌNH HỆ THỐNG TESSERACT
 # ================================================================
 
 # Chỉ định đường dẫn tệp thực thi tesseract.exe
-pytesseract.pytesseract.tesseract_cmd = os.path.join(TESSERACT_FOLDER, "tesseract.exe")
+pytesseract.pytesseract.tesseract_cmd = TESSERACT_EXE   
 
 # Thiết lập biến môi trường để Tesseract tìm thấy thư mục chứa dữ liệu ngôn ngữ (tessdata)
-os.environ['TESSDATA_PREFIX'] = os.path.join(TESSERACT_FOLDER, "tessdata")
-
+os.environ['TESSDATA_PREFIX'] = TESSDATA_DIR
 
 # ================================================================
 # 2. XỬ LÝ HÌNH ẢNH (IMAGE PRE-PROCESSING)

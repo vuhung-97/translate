@@ -66,9 +66,9 @@ class EnViT5Engine:
         clean_translated = decoded_text.replace(target_prefix, "").strip()
         
         # 6. Logic lọc trùng và định dạng câu
-        return self._clean_and_deduplicate(clean_translated)
+        return self.clean_and_deduplicate(clean_translated)
 
-    def _clean_and_deduplicate(self, text: str) -> str:
+    def clean_and_deduplicate(self, text: str) -> str:
         """
         Hàm nội bộ giúp loại bỏ các câu trùng lặp và chuẩn hóa dấu câu.
         """

@@ -1,10 +1,9 @@
 import io
-import re
 from PIL import Image
 from PyQt5.QtWidgets import (
     QWidget, QPushButton, QHBoxLayout, QScrollArea, QLabel, 
     QApplication, QDialog, QVBoxLayout, QTextBrowser, 
-    QDialogButtonBox, QComboBox, QFormLayout
+    QDialogButtonBox
 )
 from PyQt5.QtCore import Qt, QPoint, QRect, QBuffer, QIODevice
 from PyQt5.QtGui import QPainter, QColor, QPen
@@ -12,6 +11,7 @@ from PyQt5.QtGui import QPainter, QColor, QPen
 # Import các tiện ích hỗ trợ từ dự án
 from ocr_utils import clean_image_for_ocr, perform_ocr
 from ui_components import SettingsDialog, TranslationWorker
+from config import DEFAULT_SETTINGS
 
 # ================================================================
 # 1. CỬA SỔ HƯỚNG DẪN (HELP DIALOG)
@@ -92,15 +92,7 @@ class SmartTranslator(QWidget):
         super().__init__()
         
         # 1. Khởi tạo cấu hình mặc định
-        self.trans_settings = {
-            'direction': 'en-vi',
-            'beam_size': 2, 
-            'repetition_penalty': 1.5, 
-            'no_repeat_ngram_size': 3,
-            'max_decoding_length': 256, 
-            'font_size': 14, 
-            'theme': 'Tối'
-        }
+        self.trans_settings = DEFAULT_SETTINGS.copy()
         
         # 2. Khởi tạo trạng thái giao diện
         self.is_enlarged = False    # Chế độ đang quét toàn màn hình
@@ -137,9 +129,9 @@ class SmartTranslator(QWidget):
         self.btn_direction.clicked.connect(self.switch_direction)
 
         # 2. Nút kích hoạt Quét
-        self.btn_toggle = QPushButton("🔍 Quét (Esc)")
-        self.btn_toggle.setStyleSheet("background-color: #27ae60;")
-        self.btn_toggle.clicked.connect(self.toggle_mode)
+        self.btn_quet_toggle = QPushButton("🔍 Quét (Esc)")
+        self.btn_quet_toggle.setStyleSheet("background-color: #27ae60;")
+        self.btn_quet_toggle.clicked.connect(self.toggle_mode)
         
         # 3. Nút Xóa nhanh kết quả
         btn_clear = QPushButton("Xóa (Enter)")
@@ -164,7 +156,7 @@ class SmartTranslator(QWidget):
         btn_exit.clicked.connect(QApplication.quit)
         
         # Thêm các thành phần vào Layout
-        for widget in [self.btn_direction, self.btn_toggle, btn_clear, self.btn_help, btn_settings, btn_exit]:
+        for widget in [self.btn_direction, self.btn_quet_toggle, btn_clear, self.btn_help, btn_settings, btn_exit]:
             layout.addWidget(widget)
         
         self.shrink_ui() # Bắt đầu ở trạng thái thu nhỏ
@@ -217,7 +209,7 @@ class SmartTranslator(QWidget):
     def enlarge_ui(self):
         """Phóng to ra toàn màn hình để bắt đầu chọn vùng dịch."""
         self.is_enlarged = True
-        self.btn_toggle.setText("🔙 Thu nhỏ (Esc)")
+        self.btn_quet_toggle.setText("🔙 Thu nhỏ (Esc)")
         
         # Bước 1: Ẩn thanh công cụ tạm thời để chụp ảnh sạch màn hình
         self.setWindowOpacity(0)
@@ -236,7 +228,7 @@ class SmartTranslator(QWidget):
     def shrink_ui(self):
         """Thu nhỏ về thanh công cụ điều khiển."""
         self.is_enlarged = False
-        self.btn_toggle.setText("🔍 Quét (Esc)")
+        self.btn_quet_toggle.setText("🔍 Quét (Esc)")
         self.panel.adjustSize()
         self.setGeometry(self.x(), self.y(), self.panel.width(), self.panel.height())
         self.update()

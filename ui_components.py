@@ -1,28 +1,21 @@
 # ui_components.py
-from types import MappingProxyType
 from typing import Dict, Any
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QFormLayout, QSpinBox, 
     QDoubleSpinBox, QDialogButtonBox, QComboBox, 
-    QPushButton, QHBoxLayout, QTextBrowser, QLabel
+    QPushButton, QHBoxLayout
 )
-from PyQt5.QtCore import QThread, pyqtSignal, Qt
+from PyQt5.QtCore import QThread, pyqtSignal
 
 # Import thực thể AI đã được khởi tạo từ engine
 from engine import ai_engine
+from config import DEFAULT_SETTINGS
 
 # ================================================================
 # 1. CẤU HÌNH MẶC ĐỊNH (IMMUTABLE SETTINGS)
 # ================================================================
 # Sử dụng MappingProxyType để đảm bảo các giá trị mặc định không bị thay đổi trong quá trình chạy
-DEFAULT_SETTINGS = MappingProxyType({
-    'beam_size': 2,
-    'repetition_penalty': 1.5,
-    'no_repeat_ngram_size': 3,
-    'max_decoding_length': 256,
-    'font_size': 14,
-    'theme': 'Tối'
-})
+DEFAULT_SETTINGS = DEFAULT_SETTINGS
 
 # ================================================================
 # 2. DIALOG CÀI ĐẶT HỆ THỐNG

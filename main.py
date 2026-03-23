@@ -1,24 +1,21 @@
-# main.py
+# 1. IMPORT CÁC THƯ VIỆN CẦN THIẾT
 import sys
 import os
-import psutil
+from psutil import Process, HIGH_PRIORITY_CLASS
 import ctranslate2 
 import sentencepiece as spm
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import Qt
-
-# 1. CẤU HÌNH HỆ THỐNG & ĐƯỜNG DẪN
-# Phải import config đầu tiên để thiết lập biến môi trường OMP/KMP
 import config 
 
-# 2. KHỞI TẠO TÀI NGUYÊN AI (CORE LOADING)
+# 2. KHỞI TẠO TÀI NGUYÊN AI
 def load_ai_assets():
     """Nạp bộ giải mã CTranslate2 và bộ mã hóa SentencePiece vào bộ nhớ."""
     print("[DEBUG] Đang nạp BỘ NÃO AI tại Main Thread...", flush=True)
     try:
         # Khởi tạo Translator với cấu hình tối ưu CPU
         # inter_threads: Số lượng batch xử lý song song
-        # intra_threads: Số luồng CPU tối đa cho mỗi tác vụ (đã chỉnh theo config)
+        # intra_threads: Số luồng CPU tối đa cho mỗi tác vụ
         translator = ctranslate2.Translator(
             config.MODEL_DIR, 
             device="cpu", 
@@ -37,18 +34,18 @@ def load_ai_assets():
         
     except Exception as e:
         print(f"❌ Lỗi nghiêm trọng khi nạp AI: {e}", flush=True)
-        # Thoát chương trình nếu không nạp được "bộ não"
+        # Thoát chương trình nếu không nạp được model
         sys.exit(1)
 
-# 3. ĐIỀU PHỐI HỆ THỐNG (ORCHESTRATION)
+# 3. ĐIỀU PHỐI HỆ THỐNG VÀ GIAO DIỆN
 def bootstrap_application():
     """Khởi động toàn bộ thành phần hệ thống và giao diện."""
     
     # --- Thiết lập ưu tiên hệ thống ---
     try:
         # Tăng mức ưu tiên xử lý của Windows để giảm độ trễ khi quét dịch
-        p = psutil.Process(os.getpid())
-        p.nice(psutil.HIGH_PRIORITY_CLASS)
+        p = Process(os.getpid())
+        p.nice(HIGH_PRIORITY_CLASS)
     except Exception:
         pass
 
@@ -59,7 +56,7 @@ def bootstrap_application():
     from engine import ai_engine
     ai_engine.set_models(raw_translator, raw_tokenizer)
 
-    # --- Khởi chạy Giao diện người dùng (UI) ---
+    # --- Khởi chạy Giao diện người dùng ---
     # Kích hoạt chế độ hỗ trợ màn hình độ phân giải cao (High DPI)
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
     app = QApplication(sys.argv)
