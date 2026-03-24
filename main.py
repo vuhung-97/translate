@@ -65,7 +65,7 @@ class EnViT5Application:
         self._load_ai_engine()
 
         # Khởi tạo cửa sổ chính
-        from gui.main_window import SmartTranslator
+        from controller.controller import SmartTranslator
         self._main_window = SmartTranslator()
         self._main_window.show()
 

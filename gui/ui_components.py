@@ -1,22 +1,18 @@
 from typing import Dict, Any
 from PyQt5.QtWidgets import (
-    QDialog, QTextBrowser, QVBoxLayout, QFormLayout, QSpinBox, 
+    QDialog, QScrollArea, QTextBrowser, QVBoxLayout, QFormLayout, QSpinBox, 
     QDoubleSpinBox, QDialogButtonBox, QComboBox, 
-    QPushButton, QHBoxLayout, QWidget
+    QPushButton, QHBoxLayout, QWidget, QLabel
 )
 from PyQt5.QtCore import Qt
 
 # Import thực thể AI đã được khởi tạo từ engine
 from config import DEFAULT_SETTINGS, HELP_DIALOG_HTML
 
-# ================================================================
-# 1. CẤU HÌNH MẶC ĐỊNH (IMMUTABLE SETTINGS)
-# ================================================================
-# Sử dụng MappingProxyType để đảm bảo các giá trị mặc định không bị thay đổi trong quá trình chạy
 DEFAULT_SETTINGS = DEFAULT_SETTINGS.copy()
 
 # ================================================================
-# 2. DIALOG CÀI ĐẶT HỆ THỐNG
+# 1. DIALOG CÀI ĐẶT HỆ THỐNG
 # ================================================================
 class SettingsDialog(QDialog):
     """
@@ -120,7 +116,7 @@ class SettingsDialog(QDialog):
         }
 
 # ================================================================
-# 3. CỬA SỔ HƯỚNG DẪN (HELP DIALOG)
+# 2. CỬA SỔ HƯỚNG DẪN (HELP DIALOG)
 # ================================================================
 class HelpDialog(QDialog):
     """Hiển thị hướng dẫn sử dụng chi tiết bằng HTML."""
@@ -147,7 +143,7 @@ class HelpDialog(QDialog):
      
      
 # ================================================================
-# 4. GIAO DIỆN CHÍNH
+# 3. GIAO DIỆN CHÍNH
 # ================================================================
 
 class SmartTranslatorUI:
@@ -157,9 +153,13 @@ class SmartTranslatorUI:
         target.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
         target.setAttribute(Qt.WA_TranslucentBackground)
 
+        # 2. Lấy cấu hình màu trực tiếp từ ThemeManager của target
+        # Đảm bảo target đã khởi tạo self.theme_manager trước khi gọi hàm này
+        current_theme_name = target._trans_settings.get('theme', 'Tối')
+        colors = target.theme_manager.get_theme(current_theme_name)
+
         # Tạo Panel chính
         target.panel = QWidget(target)
-        colors = target._get_theme_config()
         
         target.panel.setStyleSheet(f"""
             QWidget {{ background-color: {colors['panel_bg']}; border-radius: 8px; border: 1px solid {colors['panel_border']}; }}
@@ -199,3 +199,51 @@ class SmartTranslatorUI:
                    target._btn_settings, target._btn_exit]
         for w in widgets:
             layout.addWidget(w)
+
+
+# ================================================================
+# 4. HIỂN THỊ KẾT QUẢ
+# ================================================================
+class OverlayManager:
+    """Chuyên quản lý các khung (labels) kết quả trên màn hình."""
+    _MIN_RESULT_WIDTH = 150
+    _MIN_RESULT_HEIGHT = 50
+
+    def __init__(self, parent, theme_manager):
+        self.parent = parent
+        self.theme_manager = theme_manager
+        self.results = []
+
+    def create_result_box(self, rect, font_size):
+        colors = self.theme_manager.get_theme(self.parent._trans_settings.get('theme', 'Tối'))
+        normalized_rect = rect.normalized()
+        width = max(normalized_rect.width(), self._MIN_RESULT_WIDTH)
+        height = max(normalized_rect.height(), self._MIN_RESULT_HEIGHT)
+        
+        scroll = QScrollArea(self.parent)
+        scroll.setGeometry(normalized_rect.x(), normalized_rect.y(), width, height)
+        scroll.setWidgetResizable(True)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll.setAttribute(Qt.WA_DeleteOnClose)
+        
+        # Style cho ScrollArea
+        scroll.setStyleSheet(f"""
+            QScrollArea {{ border: 2px solid {colors['accent']}; border-radius: 10px; background: {colors['bg']}; }}
+            QScrollBar:vertical {{ background: transparent; width: 4px; }}
+            QScrollBar::handle:vertical {{ background: {colors['accent']}; border-radius: 2px; }}
+        """)
+
+        label = QLabel("⌛ Đang dịch...")
+        label.setWordWrap(True)
+        label.setMinimumSize(self._MIN_RESULT_WIDTH, self._MIN_RESULT_HEIGHT)
+        label.setStyleSheet(f"color: {colors['text']}; font-size: {font_size}px; padding: 8px; background: transparent;")
+        
+        scroll.setWidget(label)
+        scroll.show()
+        self.results.append(scroll)
+        return label
+
+    def clear_all(self):
+        for item in self.results:
+            item.close()
+        self.results.clear()
