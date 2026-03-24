@@ -1,60 +1,71 @@
-# config.py
 import os
 import sys
+from dataclasses import dataclass, asdict
+from typing import Dict, Any
 
 # ================================================================
-# 1. CẤU HÌNH HỆ THỐNG & MÔI TRƯỜNG
+# 1. HẰNG SỐ HỆ THỐNG (SYSTEM CONSTANTS)
 # ================================================================
-# Tối ưu số luồng xử lý cho CPU (Phù hợp với đa số máy tính cá nhân)
-os.environ["OMP_NUM_THREADS"] = "4"
-# Xử lý lỗi xung đột thư viện Libiomp5md.dll trên Windows
-os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
-# Ngăn chặn lỗi khởi tạo luồng khi chạy đa nhiệm
-os.environ["KMP_INIT_AT_FORK"] = "FALSE"
+# Tách các giá trị cấu hình môi trường ra khỏi logic thực thi
+THREADS_COUNT = "4"
+IS_WINDOWS = sys.platform == "win32"
 
-# Hỗ trợ nạp DLL khi đóng gói bằng PyInstaller
-if hasattr(sys, '_MEIPASS'):
-    try:
-        os.add_dll_directory(sys._MEIPASS)
-    except Exception:
-        pass
+def _initialize_environment():
+    """Extract Method: Đóng gói các thiết lập biến môi trường."""
+    os.environ["OMP_NUM_THREADS"] = THREADS_COUNT
+    os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+    os.environ["KMP_INIT_AT_FORK"] = "FALSE"
+    
+    if IS_WINDOWS and hasattr(sys, '_MEIPASS'):
+        try:
+            os.add_dll_directory(sys._MEIPASS)
+        except (AttributeError, OSError):
+            pass
+
+_initialize_environment()
 
 # ================================================================
-# 2. QUẢN LÝ ĐƯỜNG DẪN TÀI NGUYÊN (RESOURCE PATHS)
+# 2. LỚP QUẢN LÝ ĐƯỜNG DẪN (PATH MANAGER)
 # ================================================================
-def get_resource_path(relative_path):
+class PathManager:
     """
-    Xác định đường dẫn tuyệt đối đến tài nguyên.
-    Hỗ trợ cả môi trường phát triển (Dev) và khi đã đóng gói (EXE).
+    Đóng gói logic xác định đường dẫn tài nguyên.
+    Hỗ trợ cả môi trường Dev và EXE (PyInstaller).
     """
-    if hasattr(sys, '_MEIPASS'):
-        # Đường dẫn thư mục tạm khi chạy file EXE
-        return os.path.join(sys._MEIPASS, relative_path)
-    # Đường dẫn thư mục gốc khi chạy file .py
-    return os.path.join(os.path.abspath("."), relative_path)
+    @staticmethod
+    def get_path(relative_path: str) -> str:
+        # Sử dụng thuộc tính _MEIPASS nếu chạy từ file đóng gói
+        base = getattr(sys, '_MEIPASS', os.path.abspath("."))
+        return os.path.join(base, relative_path)
 
-# --- Đường dẫn các thành phần chính ---
-# Thư mục chứa bộ não AI EnViT5 (Định dạng CTranslate2)
-MODEL_DIR = get_resource_path("model_envit5_fast")
+# Các hằng số đường dẫn được định nghĩa tập trung
+MODEL_DIR = PathManager.get_path("models/model_envit5_fast")
+TESSERACT_DIR = PathManager.get_path("bin/Tesseract-OCR")
+HELP_DIALOG_DIR = PathManager.get_path("gui")
 
-# Thư mục chứa công cụ quét chữ Tesseract OCR
-TESSERACT_FOLDER = get_resource_path("Tesseract-OCR")
-
-# Thư mục chứa dữ liệu ngôn ngữ (eng.traineddata, vie.traineddata)
-TESSDATA_DIR = os.path.join(TESSERACT_FOLDER, "tessdata")
-
-# Đường dẫn đến file thực thi của Tesseract
-TESSERACT_EXE = os.path.join(TESSERACT_FOLDER, "tesseract.exe")
+TESSDATA_DIR = os.path.join(TESSERACT_DIR, "tessdata")
+TESSERACT_EXE = os.path.join(TESSERACT_DIR, "tesseract.exe")
+HELP_DIALOG_HTML = os.path.join(HELP_DIALOG_DIR, "help.html")
 
 # ================================================================
-# 3. CẤU HÌNH MẶC ĐỊNH (DEFAULT SETTINGS)
+# 3. ĐỐI TƯỢNG CẤU HÌNH (APP SETTINGS)
 # ================================================================
-DEFAULT_SETTINGS = {
-    'direction': 'en-vi',             # Chiều dịch mặc định: Anh -> Việt
-    'beam_size': 2,                  # Độ sâu tìm kiếm của AI
-    'repetition_penalty': 1.5,       # Phạt lặp từ (ngăn AI bị quẩn)
-    'no_repeat_ngram_size': 3,       # Ngăn lặp cụm 3 từ
-    'max_decoding_length': 256,      # Độ dài tối đa câu dịch
-    'font_size': 14,                 # Kích thước chữ hiển thị
-    'theme': 'Tối'                   # Giao diện kết quả
-}
+@dataclass
+class TranslationSettings:
+    """
+    Thay thế Dictionary bằng Dataclass để có gợi ý code và kiểm soát kiểu dữ liệu.
+    Giải quyết Bad Smell: Data Clump (Nhóm dữ liệu rời rạc).
+    """
+    direction: str = 'en-vi'
+    beam_size: int = 2
+    repetition_penalty: float = 1.5
+    no_repeat_ngram_size: int = 3
+    max_decoding_length: int = 256
+    font_size: int = 14
+    theme: str = 'Tối'
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+# Tạo một instance mặc định
+DEFAULT_SETTINGS = TranslationSettings().to_dict()

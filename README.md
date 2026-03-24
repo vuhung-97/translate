@@ -1,139 +1,127 @@
-# 🚀 EnViT5 Smart Translator - Bản Siêu Tốc (Offline)
+# EnViT5 Smart Translator
 
-> **EnViT5 Smart Translator** là công cụ dịch thuật màn hình mạnh mẽ, sử dụng trí tuệ nhân tạo (AI) để dịch trực tiếp từ hình ảnh sang tiếng Việt. Phần mềm được tối ưu hóa đặc biệt cho dòng chip Intel Core i7 Thế hệ 12, đảm bảo tốc độ phản hồi tức thì mà không cần kết nối Internet.
+Ứng dụng dịch màn hình offline dùng PyQt5 + Tesseract OCR + EnViT5 (CTranslate2).
 
----
+Mục tiêu của dự án là quét văn bản trên màn hình, OCR theo vùng chọn, sau đó dịch nhanh giữa Anh-Việt hoặc Việt-Anh ngay trên máy cục bộ.
 
-## 🌟 Tính năng nổi bật
+## Tính năng chính
 
-- **Dịch Offline 100%**: Không gửi dữ liệu lên mây, bảo mật tuyệt đối thông tin.
-- **Cốt lõi VietAI**: Sử dụng mô hình EnViT5 chuyên sâu cho cặp ngôn ngữ Anh - Việt.
-- **Tốc độ i7 Gen 12**: Tận dụng nhân P-cores và định dạng INT8 Quantization để dịch trong chưa đầy 1 giây.
-- **Chống lặp thông minh**: Tích hợp bộ phạt lặp (Repetition Penalty) và tự động chuẩn hóa dấu câu đầu vào.
+- Dịch hoàn toàn offline, không cần Internet.
+- Quét vùng màn hình bằng chuột, hiển thị bản dịch trực tiếp trên giao diện.
+- Hỗ trợ 2 chiều dịch: `en-vi` và `vi-en`.
+- Có hộp cài đặt để tinh chỉnh các tham số suy luận: `beam_size`, `repetition_penalty`, `no_repeat_ngram_size`, `max_decoding_length`, `font_size`, giao diện chủ đề.
+- OCR nội bộ bằng Tesseract, model OCR đặt sẵn trong thư mục dự án.
 
----
+## Công nghệ sử dụng
 
-## 📦 Hướng dẫn cài đặt (Bản Portable)
+- Python 3.13
+- PyQt5
+- CTranslate2
+- sentencepiece
+- pytesseract + OpenCV + Pillow
 
-> Nếu bạn sử dụng bộ máy đã đóng gói (thư mục `dist\EnViT5_Portable`), **không cần cài đặt Python hay bất cứ thư viện nào**.
+## Yêu cầu hệ thống
 
-1. **Giải nén**: Giải nén tệp tin `.zip` vào một thư mục trên ổ cứng (ưu tiên SSD).
-2. **Khởi chạy**: Tìm và nhấp đúp vào file `EnViT5_Portable.exe`.
-3. **Cấp quyền**: Nếu Windows Defender hiện cảnh báo, chọn **More info** → **Run anyway**.
+- Windows 10/11 (đã kiểm thử chính trên Windows).
+- CPU chạy tốt với thiết lập mặc định của dự án.
+- Cần giữ nguyên thư mục model và OCR đi kèm khi chạy app.
 
-> ⚠️ **Lưu ý:**
-> Toàn bộ dữ liệu quan trọng như bộ não AI và động cơ OCR nằm trong thư mục `_internal`. Vui lòng không xóa hoặc di chuyển thư mục này.
+## Chạy dự án ở chế độ dev
 
----
-
-## 📖 Hướng dẫn sử dụng
-
-### Giao diện phần mềm
-
-Phần mềm có 4 nút chính:
-
-- **Quét / Thu nhỏ (Esc):** Phóng to màn hình để bắt đầu chế độ dịch hoặc thu nhỏ để thoát.
-- **Xóa (Enter):** Xóa vùng đã chọn và reset màn hình.
-- **Cài đặt:** Mở cửa sổ cài đặt với các thông số: - `Beams Size`: Số lượng beam trong quá trình tìm kiếm, ảnh hưởng đến chất lượng bản dịch (giá trị cao hơn có thể cải thiện chất lượng nhưng làm chậm tốc độ). - `Phạt lặp`: Hệ số phạt lặp từ, giúp giảm khả năng lặp lại từ trong bản dịch. - `Chặn lặp cụm`: Kích thước n-gram không được lặp lại, ngăn chặn việc lặp lại cụm từ trong bản dịch. - `Độ dài tối đa`: Độ dài tối đa của bản dịch đầu ra. - `Cỡ chữ`: Kích thước chữ hiển thị trong bản dịch.
-- **Thoát (X):** Đóng phần mềm.
-
-### Các bước dịch nhanh
-
-1. Chọn nút **Quét** (hoặc nhấn Esc nếu đang ở chế độ thu nhỏ).
-2. Màn hình chuyển sang chế độ mờ.
-3. Chọn vùng cần dịch bằng chuột (nên chọn theo câu hoặc đoạn văn, tránh chọn theo danh mục hoặc menu để dịch tốt nhất).
-4. Nếu muốn reset màn hình, nhấn nút **Xóa** hoặc Enter.
-5. Thu nhỏ phần mềm bằng nút **Thu nhỏ** hoặc Esc.
-6. Thoát phần mềm bằng nút **X**.
-
----
-
-## 👨‍💻 Dev Guide
-
-Ứng dụng dịch thuật màn hình sử dụng bộ não EnViT5 (CTranslate2), Tesseract OCR và giao diện PyQt5.
-
-### 1. Thiết lập Môi trường (Venv)
-
-Để tránh xung đột thư viện và lỗi đường dẫn tuyệt đối, hãy luôn khởi tạo môi trường ảo mới:
+1. Tạo môi trường ảo:
 
 ```powershell
 python -m venv venv
-# Kích hoạt:
-# Windows:
-.\venv\Scripts\activate
-# Linux/Mac:
-source venv/bin/activate
 ```
 
-### 2. Cài đặt Thư viện
+2. Kích hoạt môi trường:
 
-Sau khi kích hoạt venv, tiến hành cài đặt các phụ thuộc chính:
+```powershell
+.\venv\Scripts\Activate.ps1
+```
+
+3. Cài dependencies:
 
 ```powershell
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-> **Lưu ý:** Nếu gặp lỗi DLL load failed khi chạy OpenCV hoặc CTranslate2, hãy cài đặt Microsoft Visual C++ Redistributable.
-
-### 3. Quản lý Phụ thuộc với pipreqs
-
-Khi bạn thêm module mới vào code, hãy dùng pipreqs để cập nhật `requirements.txt`. Do dự án chứa ký tự tiếng Việt, bắt buộc dùng flag encoding:
+4. Chạy ứng dụng:
 
 ```powershell
-# Tạo lại file requirements (ép kiểu UTF-8)
-pipreqs . --force --encoding=utf-8
+python .\main.py
 ```
 
-### 4. Đóng gói phần mềm (Packaging)
+## Hướng dẫn sử dụng nhanh
 
-Sử dụng PyInstaller để đóng gói thành file `.exe`. Vì ứng dụng cần các folder tài nguyên, hãy dùng tham số `--add-data`.
+1. Nhấn nút Quét (hoặc phím `Esc`) để vào chế độ chọn vùng.
+2. Kéo chuột khoanh vùng văn bản cần dịch.
+3. Ứng dụng OCR và dịch, kết quả hiển thị ngay trên vùng vừa chọn.
+4. Nhấn `Enter` để xóa toàn bộ kết quả hiện có.
+5. Nhấn `Esc` lần nữa để thu nhỏ giao diện về thanh công cụ.
 
-**Lệnh đóng gói chuẩn:**
+## Cấu hình dịch
 
-```powershell
-pyinstaller --noconfirm --onedir --windowed --name "EnViT5_Translator" \
-    --add-data "model_envit5_fast;model_envit5_fast" \
-    --add-data "Tesseract-OCR;Tesseract-OCR" \
-    --add-data ".env;." main.py
-```
+Trong cửa sổ Cài đặt có các tham số chính:
 
-- `--onedir`: Tạo thư mục chứa file chạy (khuyên dùng để dễ quản lý folder model).
-- `--windowed`: Tắt màn hình console đen khi mở app.
+- `beam_size`: tăng chất lượng tìm kiếm, đổi lại chậm hơn.
+- `repetition_penalty`: giảm lặp từ/cụm từ.
+- `no_repeat_ngram_size`: chặn lặp cụm theo n-gram.
+- `max_decoding_length`: giới hạn độ dài đầu ra.
+- `font_size`: cỡ chữ vùng kết quả.
 
----
+Cấu hình mặc định được khai báo trong `config.py` tại `DEFAULT_SETTINGS`.
 
-### 5. Lưu ý quan trọng sau khi đóng gói
+## Cấu trúc thư mục
 
-- **Cấu trúc thư mục:** Đảm bảo folder `model_envit5_fast` và `Tesseract-OCR` nằm cùng cấp với file `.exe`.
-- **Quyền truy cập:** Nếu ứng dụng không thực hiện được OCR, hãy thử chạy với quyền Administrator để Tesseract có quyền đọc bộ nhớ tạm.
-- **i7 Gen 12 (Hybrid CPU):** Code đã được ép `intra_threads=1` và `OMP_NUM_THREADS=1` để tránh hiện tượng treo (Deadlock) trên kiến trúc nhân P và E của Intel. Đừng tăng thông số này lên trừ khi bạn đã test kỹ trên các dòng chip khác.
-- **Tesseract Path:** Trong code, hàm `get_resource_path()` sẽ tự động tìm đường dẫn trong thư mục tạm `_MEIPASS` của PyInstaller, hãy giữ nguyên logic này để app hoạt động trên mọi máy.
-
----
-
-### 6. Cấu trúc Project
-
-```plaintext
+```text
 translate2/
-├── main.py                # File chạy chính
-├── main_window.py         # Giao diện chính PyQt5
-├── engine.py              # Xử lý dịch và logic AI
-├── ocr_utils.py           # Tiện ích OCR (Tesseract)
-├── ui_components.py       # Các thành phần giao diện phụ trợ
-├── config.py              # Cấu hình chung
-├── main.spec              # File cấu hình đóng gói PyInstaller
-├── requirements.txt       # Danh sách thư viện Python
-├── README.md              # Tài liệu hướng dẫn
-├── build/                 # Thư mục build của PyInstaller
-├── __pycache__/           # Thư mục cache Python
-├── model_envit5_fast/     # Chứa model AI (config.json, shared_vocabulary.json, spiece.model)
-├── Tesseract-OCR/         # Chứa tesseract.exe, tessdata/ và các file OCR
-│   └── tessdata/          # Dữ liệu ngôn ngữ cho Tesseract (eng.traineddata, vie.traineddata, ...)
-└── ...                    # Các file/thư mục khác nếu có
+├── main.py
+├── config.py
+├── main.spec
+├── requirements.txt
+├── core/
+│   ├── engine.py
+│   └── ocr_utils.py
+├── gui/
+│   ├── main_window.py
+│   ├── ui_components.py
+│   ├── theme_config.py
+│   └── help.html
+├── models/
+│   └── model_envit5_fast/
+└── bin/
+        └── Tesseract-OCR/
 ```
 
-> **Lưu ý:**
->
-> - Đảm bảo các thư mục `model_envit5_fast` và `Tesseract-OCR` nằm cùng cấp với file thực thi `.exe` hoặc `main.py` khi chạy hoặc đóng gói.
-> - Thư mục `build/` và `__pycache__/` được tạo tự động, không cần quan tâm khi sử dụng thông thường.
+## Đóng gói bằng PyInstaller
+
+Có thể build theo file spec sẵn có:
+
+```powershell
+pyinstaller .\main.spec
+```
+
+Nếu build thủ công bằng CLI, cần đảm bảo thêm đúng dữ liệu theo cấu trúc hiện tại:
+
+```powershell
+pyinstaller --noconfirm --onedir --windowed --name "SmartTranslator_EnViT5" ^
+    --add-data "models\model_envit5_fast;models\model_envit5_fast" ^
+    --add-data "bin\Tesseract-OCR;bin\Tesseract-OCR" ^
+    main.py
+```
+
+Sau khi đóng gói, file thực thi phải đi cùng các thư mục dữ liệu đã add ở trên để OCR và model dịch hoạt động.
+
+## Một số lỗi thường gặp
+
+- `DLL load failed`: cài Microsoft Visual C++ Redistributable mới nhất.
+- OCR không trả kết quả: kiểm tra lại quyền truy cập và đường dẫn thư mục `bin/Tesseract-OCR`.
+- App chạy nhưng không dịch: kiểm tra sự tồn tại của model trong `models/model_envit5_fast`.
+
+## Ghi chú cho developer
+
+- Biến môi trường hiệu năng và xử lý OpenMP được cấu hình trong `config.py`.
+- Luồng dịch chạy qua `TranslationWorker` để tránh đơ UI.
+- AI engine dùng singleton tại `core/engine.py` và được nạp model ở bước khởi động trong `main.py`.
