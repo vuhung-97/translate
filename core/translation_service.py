@@ -2,7 +2,7 @@ from PyQt5.QtCore import pyqtSignal, QObject
 
 # Các import từ dự án (giữ nguyên)
 from core.ocr_utils import clean_image_for_ocr, perform_ocr
-from core.engine import TranslationWorker
+from core.translation_worker import TranslationWorker
 # ================================================================
 # 1. DỊCH THUẬT & OCR (LOGIC LAYER)
 # ================================================================
