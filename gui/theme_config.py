@@ -1,4 +1,12 @@
+"""
+Module này định nghĩa lớp ThemeConfig để quản lý cấu hình giao diện cho ứng dụng. 
+Nó cung cấp các theme màu sắc khác nhau và phương thức để truy xuất chúng
+Giúp tách biệt logic giao diện khỏi phần còn lại của ứng dụng.
+"""
 class ThemeConfig:
+    """
+    Quản lý cấu hình giao diện cho ứng dụng.
+    """
     def __init__(self):
         self.themes = {
             "Tối": {
@@ -18,8 +26,8 @@ class ThemeConfig:
                     "clear": "#e67e22",
                     "help": "#675820",
                     "settings": "#7f8c8d",
-                    "exit": "#c0392b"
-                }
+                    "exit": "#c0392b",
+                },
             },
             "Sáng": {
                 "bg": "#ffffff",
@@ -38,13 +46,15 @@ class ThemeConfig:
                     "clear": "#e67e22",
                     "help": "#f1c40f",
                     "settings": "#7f8c8d",
-                    "exit": "#c0392b"
-                }
-            }
+                    "exit": "#c0392b",
+                },
+            },
         }
 
     def get_theme(self, name):
+        """Lấy cấu hình màu sắc cho theme đã chọn."""
         return self.themes.get(name)
 
     def get_available_themes(self):
+        """Trả về danh sách tên các theme có sẵn."""
         return list(self.themes.keys())

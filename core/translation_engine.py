@@ -1,3 +1,13 @@
+# pylint: disable=no-name-in-module, import-error
+
+"""
+Module này định nghĩa lớp EnViT5Engine, đóng vai trò là lõi xử lý 
+dịch thuật của ứng dụng. Nó được thiết kế để tách biệt hoàn toàn
+logic dịch thuật khỏi phần còn lại của ứng dụng, giúp tăng tính
+modular và dễ bảo trì.EnViT5Engine sử dụng mô hình CTranslate2 và
+SentencePiece để thực hiện dịch thuật giữa tiếng Anh và tiếng Việt.
+"""
+
 from typing import Dict, Any, List
 from config import DEFAULT_SETTINGS
 
@@ -20,9 +30,9 @@ class EnViT5Engine:
             cls._instance._translator = None
             cls._instance._tokenizer = None
         return cls._instance
-    
+
     def __init__(self):
-        # Encapsulate Field: 
+        # Encapsulate Field:
         self._translator = None
         self._tokenizer = None
 
@@ -57,26 +67,41 @@ class EnViT5Engine:
         return self._translator is not None and self._tokenizer is not None
 
     def _prepare_prompt(self, text: str, direction: str):
-        """Tách biệt logic xử lý Prompt Engineering."""
+        """Logic xử lý Prompt Engineering."""
         if direction == 'vi-en':
             return f"{self._PREFIX_VI}{text}", self._PREFIX_EN
         return f"{self._PREFIX_EN}{text}", self._PREFIX_VI
 
     def _encode_text(self, prompt: str) -> List[str]:
-        """Tách biệt logic Tokenization."""
+        """Logic Tokenization."""
         tokens = self._tokenizer.encode(prompt, out_type=str)
         if not tokens or tokens[-1] != self._TOKEN_EOS:
             tokens.append(self._TOKEN_EOS)
         return tokens
 
     def _perform_inference(self, tokens: List[str], settings: Dict[str, Any]):
-        """Tách biệt logic gọi mô hình AI."""
+        """Logic gọi mô hình AI."""
         results = self._translator.translate_batch(
-            [tokens], 
-            beam_size=settings.get('beam_size', DEFAULT_SETTINGS['beam_size']),
-            repetition_penalty=settings.get('repetition_penalty', DEFAULT_SETTINGS['repetition_penalty']),
-            no_repeat_ngram_size=settings.get('no_repeat_ngram_size', DEFAULT_SETTINGS['no_repeat_ngram_size']),
-            max_decoding_length=settings.get('max_decoding_length', DEFAULT_SETTINGS['max_decoding_length'])
+            [tokens],
+            beam_size=settings.get(
+                'beam_size',
+                DEFAULT_SETTINGS['beam_size']
+            ),
+
+            repetition_penalty=settings.get(
+                'repetition_penalty',
+                DEFAULT_SETTINGS['repetition_penalty']
+            ),
+
+            no_repeat_ngram_size=settings.get(
+                'no_repeat_ngram_size',
+                DEFAULT_SETTINGS['no_repeat_ngram_size']
+            ),
+
+            max_decoding_length=settings.get(
+                'max_decoding_length',
+                DEFAULT_SETTINGS['max_decoding_length']
+            ),
         )
         return results[0].hypotheses[0]
 
@@ -92,18 +117,17 @@ class EnViT5Engine:
             return ""
 
         sentences = [s.strip() for s in text.split('.') if s.strip()]
-        
         unique_sentences = []
         seen = set()
         for sentence in sentences:
             if sentence.lower() not in seen:
                 unique_sentences.append(sentence)
                 seen.add(sentence.lower())
-        
+
         final_text = ". ".join(unique_sentences)
         if final_text and not final_text.endswith('.'):
             final_text += '.'
-            
+
         return final_text
 
 # Khởi tạo instance duy nhất

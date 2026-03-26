@@ -1,8 +1,15 @@
+# pylint: disable=no-name-in-module, import-error, too-few-public-methods
+"""
+Module này định nghĩa lớp TranslationService
+Một lớp trung gian chuyên xử lý logic chuyển đổi từ Ảnh -> Chữ -> Bản dịch.
+Nó giúp tách biệt hoàn toàn logic dịch thuật khỏi phần còn lại của ứng dụng
+"""
+
 from PyQt5.QtCore import pyqtSignal, QObject
 
 # Các import từ dự án (giữ nguyên)
 from core.ocr_processor import OCRProcessor
-from core.translation_worker import TranslationWorker
+from core.translation_worker import TranslationResult, TranslationWorker
 # ================================================================
 # DỊCH THUẬT & OCR (LOGIC LAYER)
 # ================================================================
@@ -18,7 +25,9 @@ class TranslationService(QObject):
     def process_image(self, pil_img, target_label):
         """Thực hiện OCR và bắt đầu luồng dịch."""
         ocr_processor = OCRProcessor()
-        text = ocr_processor.process(pil_img, lang='vie' if self.settings.get('direction') == 'vi-en' else 'eng')
+        text = ocr_processor.process(
+            pil_img,
+            lang='vie' if self.settings.get('direction') == 'vi-en' else 'eng')
 
         if text.strip():
             self._start_worker(text, target_label)
@@ -26,7 +35,8 @@ class TranslationService(QObject):
             target_label.setText("Không tìm thấy chữ!")
 
     def _start_worker(self, text, target_label):
-        worker = TranslationWorker(text, 0, 0, 0, self.settings)
+        result = TranslationResult(text=text, x=0, y=0, width=0)
+        worker = TranslationWorker(result, self.settings)
         worker.finished.connect(lambda result, _x, _y, _w: target_label.setText(result))
         worker.finished.connect(lambda _result, _x, _y, _w: self._cleanup_worker(worker))
         self._active_workers.append(worker)
