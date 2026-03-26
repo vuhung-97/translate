@@ -1,9 +1,10 @@
 from PyQt5.QtCore import QThread, pyqtSignal
+
 # Các import từ dự án (giữ nguyên)
-from core.engine import ai_engine
+from core.translation_engine import ai_engine
 
 # ================================================================
-# 1. LUỒNG XỬ LÝ DỊCH THUẬT (BACKGROUND WORKER)
+# LUỒNG XỬ LÝ DỊCH THUẬT (BACKGROUND WORKER)
 # ================================================================
 class TranslationWorker(QThread):
     """

@@ -1,10 +1,10 @@
 from PyQt5.QtCore import pyqtSignal, QObject
 
 # Các import từ dự án (giữ nguyên)
-from core.ocr_utils import clean_image_for_ocr, perform_ocr
+from core.ocr_processor import OCRProcessor
 from core.translation_worker import TranslationWorker
 # ================================================================
-# 1. DỊCH THUẬT & OCR (LOGIC LAYER)
+# DỊCH THUẬT & OCR (LOGIC LAYER)
 # ================================================================
 class TranslationService(QObject):
     """Chuyên xử lý logic chuyển đổi từ Ảnh -> Chữ -> Bản dịch."""
@@ -17,9 +17,8 @@ class TranslationService(QObject):
 
     def process_image(self, pil_img, target_label):
         """Thực hiện OCR và bắt đầu luồng dịch."""
-        processed = clean_image_for_ocr(pil_img)
-        lang = 'vie' if self.settings.get('direction') == 'vi-en' else 'eng'
-        text = perform_ocr(processed, lang=lang)
+        ocr_processor = OCRProcessor()
+        text = ocr_processor.process(pil_img, lang='vie' if self.settings.get('direction') == 'vi-en' else 'eng')
 
         if text.strip():
             self._start_worker(text, target_label)

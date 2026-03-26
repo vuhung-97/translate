@@ -48,7 +48,7 @@ class EnViT5Application:
             )
             
             # Đẩy vào engine trung tâm
-            from core.engine import ai_engine
+            from core.translation_engine import ai_engine
             ai_engine.set_models(self._translator, self._tokenizer)
             print("✅ Hệ thống AI đã sẵn sàng!", flush=True)
         except Exception as e:
@@ -65,7 +65,7 @@ class EnViT5Application:
         self._load_ai_engine()
 
         # Khởi tạo cửa sổ chính
-        from controller.controller import SmartTranslator
+        from controller.smart_translator import SmartTranslator
         self._main_window = SmartTranslator()
         self._main_window.show()
 

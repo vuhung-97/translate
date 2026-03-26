@@ -3,8 +3,7 @@ from config import DEFAULT_SETTINGS
 
 class EnViT5Engine:
     """
-    Lõi xử lý dịch thuật đã được Refactor.
-    Áp dụng: Extract Method, Encapsulate Field, và Constant Extraction.
+    Lõi xử lý dịch thuật.
     """
 
     # Extract Constants: Gom các chuỗi cố định để dễ quản lý
@@ -52,8 +51,6 @@ class EnViT5Engine:
 
         # 5. Giải mã và Hậu xử lý (Extract Method)
         return self._post_process(raw_output, target_prefix)
-
-    # --- CÁC PHƯƠNG THỨC NỘI BỘ (PRIVATE METHODS) ---
 
     def _is_ready(self) -> bool:
         """Kiểm tra trạng thái engine."""

@@ -9,10 +9,13 @@ from gui.ui_components import SettingsDialog, HelpDialog, SmartTranslatorUI, Ove
 from config import DEFAULT_SETTINGS
 from gui.theme_config import ThemeConfig
 from core.translation_service import TranslationService
+from controller.mouse_event import MouseEvent
+from controller.ui_handler import UIHandler
+
 # ================================================================
-# 1. LỚP ĐIỀU KHIỂN CHÍNH (CONTROLLER)
+# LỚP ĐIỀU KHIỂN CHÍNH (SỬ DỤNG ĐA KẾ THỪA)
 # ================================================================
-class SmartTranslator(QWidget):
+class SmartTranslator(QWidget, MouseEvent, UIHandler):
     """Lớp điều phối chính - Kết nối UI, Chụp màn hình và Dịch thuật."""
     def __init__(self):
         super().__init__()
@@ -24,7 +27,7 @@ class SmartTranslator(QWidget):
         self.overlay_manager = OverlayManager(self, self.theme_manager)
         self.trans_service = TranslationService(self._trans_settings)
         
-        # 3. Trạng thái giao diện
+        # 3. Trạng thái giao diện (Được các Mixin sử dụng)
         self._is_scanning_mode = False
         self._is_selecting = False
         self._start_pt = QPoint()
@@ -32,7 +35,7 @@ class SmartTranslator(QWidget):
         self._snapshot = None
         self._drag_offset = None
 
-        # 4. Setup UI (Sử dụng builder cũ của bạn)
+        # 4. Setup UI
         self.ui_builder = SmartTranslatorUI()
         self.ui_builder.setup_ui(self)
         self.setFocusPolicy(Qt.StrongFocus)
@@ -42,6 +45,7 @@ class SmartTranslator(QWidget):
         self.show()
 
     def _connect_signals(self):
+        """Kết nối tín hiệu từ các nút bấm với các phương thức xử lý."""
         self._btn_quet_toggle.clicked.connect(self._toggle_scan_mode)
         self._btn_clear.clicked.connect(self.overlay_manager.clear_all)
         self._btn_direction.clicked.connect(self._switch_direction)
@@ -69,8 +73,6 @@ class SmartTranslator(QWidget):
         if dialog.exec_():
             self._trans_settings.update(dialog.get_values())
 
-    # --- Logic Chuyển đổi Chế độ ---
-    
     def _toggle_scan_mode(self):
         if self._is_scanning_mode:
             self._set_compact_mode()
@@ -79,7 +81,6 @@ class SmartTranslator(QWidget):
 
     def _set_full_scan_mode(self):
         self._is_scanning_mode = True
-        # Chụp màn hình trước khi hiện lớp phủ
         self.setWindowOpacity(0)
         QApplication.processEvents()
         self._snapshot = QApplication.primaryScreen().grabWindow(0)
@@ -95,76 +96,8 @@ class SmartTranslator(QWidget):
         self._is_scanning_mode = False
         self._btn_quet_toggle.setText("🔍 Quét (Esc)")
         self._btn_help.setVisible(True)
-        # Cập nhật trạng thái nút trước rồi mới tính lại kích thước panel để tránh lệch size.
         self.panel.adjustSize()
         self.resize(self.panel.size())
         self.move(0, 0)
         self.setFocus()
         self.update()
-
-    # --- Xử lý Sự kiện Chuột ---
-
-    def mousePressEvent(self, event):
-        if self._is_scanning_mode and not self.panel.geometry().contains(event.pos()):
-            self._is_selecting = True
-            self._start_pt = event.pos()
-            self._end_pt = event.pos()
-        else:
-            self._drag_offset = event.globalPos() - self.pos()
-
-    def mouseMoveEvent(self, event):
-        if self._is_selecting:
-            self._end_pt = event.pos()
-            self.update()
-        elif self._drag_offset:
-            self.move(event.globalPos() - self._drag_offset)
-
-    def mouseReleaseEvent(self, event):
-        if self._is_selecting:
-            self._is_selecting = False
-            self._handle_selection_done()
-        self._drag_offset = None
-
-    def _handle_selection_done(self):
-        rect = QRect(self._start_pt, self._end_pt).normalized()
-        if rect.width() < 10 or rect.height() < 10: return
-
-        # 1. Cắt ảnh từ snapshot
-        buffer = QBuffer()
-        buffer.open(QIODevice.ReadWrite)
-        self._snapshot.copy(rect).save(buffer, "PNG")
-        pil_img = Image.open(io.BytesIO(buffer.data()))
-
-        # 2. Tạo khung hiển thị qua OverlayManager
-        target_label = self.overlay_manager.create_result_box(
-            rect, self._trans_settings.get('font_size', 12)
-        )
-
-        # 3. Yêu cầu TranslationService xử lý
-        self.trans_service.process_image(pil_img, target_label)
-
-    # --- Vẽ giao diện ---
-
-    def paintEvent(self, event):
-        if not self._is_scanning_mode: return
-        
-        painter = QPainter(self)
-        painter.fillRect(self.rect(), QColor(0, 0, 0, 120)) # Lớp phủ mờ
-        
-        if self._is_selecting:
-            pen = QPen(QColor("#2ecc71"), 2, Qt.DashLine)
-            painter.setPen(pen)
-            painter.drawRoundedRect(QRect(self._start_pt, self._end_pt).normalized(), 10, 10)
-
-    def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Escape:
-            self._toggle_scan_mode()
-            event.accept()
-            return
-
-        if event.key() in (Qt.Key_Return, Qt.Key_Enter):
-            self.overlay_manager.clear_all()
-            event.accept()
-            return
-
-        super().keyPressEvent(event)
