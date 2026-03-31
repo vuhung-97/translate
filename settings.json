@@ -1,0 +1,8 @@
+{
+    "beam_size": 5,
+    "repetition_penalty": 1.5,
+    "no_repeat_ngram_size": 3,
+    "max_decoding_length": 256,
+    "font_size": 17,
+    "theme": "Sáng"
+}

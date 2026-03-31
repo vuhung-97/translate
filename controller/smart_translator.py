@@ -58,3 +58,4 @@ class SmartTranslator(MouseEvent, UIHandler):
         dialog = SettingsDialog(self.trans_settings, self)
         if dialog.exec_():
             self.trans_settings.update(dialog.get_values())
+            

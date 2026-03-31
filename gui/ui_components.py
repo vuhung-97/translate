@@ -18,9 +18,8 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 
 # Import thực thể AI đã được khởi tạo từ engine
-from config import DEFAULT_SETTINGS, HELP_DIALOG_HTML
+from config import SETTINGS, HELP_DIALOG_HTML, save_settings
 
-DEFAULT_SETTINGS = DEFAULT_SETTINGS.copy()
 
 
 # ================================================================
@@ -34,7 +33,7 @@ class SettingsDialog(QDialog):
     def __init__(self, current_settings: Dict[str, Any], parent=None):
         super().__init__(parent)
         self.settings = current_settings
-        self.default_values = DEFAULT_SETTINGS
+        self.default_values = SETTINGS
 
         self.setWindowTitle("Cấu hình bộ não EnViT5")
         self.setFixedSize(450, 350)
@@ -78,6 +77,9 @@ class SettingsDialog(QDialog):
 
         self.controls["repetition_penalty"] = QDoubleSpinBox()
         self.controls["repetition_penalty"].setRange(1.0, 3.0)
+        self.controls["repetition_penalty"].setToolTip(
+            "Giá trị cao giúp giảm lặp từ nhưng có thể làm dịch cứng hơn."
+        )
         self.controls["repetition_penalty"].setSingleStep(0.1)
         self.controls["repetition_penalty"].setValue(
             self.settings.get("repetition_penalty", 1.5)
@@ -86,6 +88,9 @@ class SettingsDialog(QDialog):
 
         self.controls["no_repeat_ngram_size"] = QSpinBox()
         self.controls["no_repeat_ngram_size"].setRange(0, 5)
+        self.controls["no_repeat_ngram_size"].setToolTip(
+            "Giá trị >0 giúp chặn lặp cụm từ, nhưng có thể làm dịch cứng hơn."
+        )
         self.controls["no_repeat_ngram_size"].setValue(
             self.settings.get("no_repeat_ngram_size", 3)
         )
@@ -93,6 +98,10 @@ class SettingsDialog(QDialog):
 
         self.controls["max_decoding_length"] = QSpinBox()
         self.controls["max_decoding_length"].setRange(50, 512)
+        self.controls["max_decoding_length"].setToolTip(
+            "Độ dài tối đa của chuỗi đầu ra."
+        )
+
         self.controls["max_decoding_length"].setValue(
             self.settings.get("max_decoding_length", 256)
         )
@@ -101,6 +110,9 @@ class SettingsDialog(QDialog):
         # --- Nhóm hiển thị ---
         self.controls["font_size"] = QSpinBox()
         self.controls["font_size"].setRange(8, 40)
+        self.controls["font_size"].setToolTip(
+            "Cỡ chữ của văn bản hiển thị trong ứng dụng."
+        )
         self.controls["font_size"].setValue(self.settings.get("font_size", 14))
         form_layout.addRow("Cỡ chữ hiển thị:", self.controls["font_size"])
 
@@ -121,15 +133,21 @@ class SettingsDialog(QDialog):
         self.button_box = QDialogButtonBox(
             QDialogButtonBox.Ok | QDialogButtonBox.Cancel
         )
-        self.button_box.accepted.connect(self.accept)
+        self.button_box.accepted.connect(self.save_and_accept)
         self.button_box.rejected.connect(self.reject)
 
         button_layout.addWidget(self.btn_reset)
         button_layout.addWidget(self.button_box)
         main_layout.addLayout(button_layout)
+        
+    def save_and_accept(self):
+        """Lưu cài đặt vào file JSON khi nhấn OK."""
+        settings = self.get_values()
+        save_settings(settings)
+        self.accept()
 
     def reset_to_defaults(self):
-        """Đặt lại tất cả các widget về giá trị trong DEFAULT_SETTINGS."""
+        """Đặt lại tất cả các widget về giá trị trong SETTINGS."""
         for key, widget in self.controls.items():
             if key in self.default_values:
                 if isinstance(widget, QComboBox):

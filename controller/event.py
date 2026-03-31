@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import QWidget, QApplication
 from core.translation_service import TranslationService
 from gui.theme_config import ThemeConfig
 from gui.ui_components import OverlayManager
-from config import DEFAULT_SETTINGS
+from config import SETTINGS
 
 
 # ================================================================
@@ -25,7 +25,7 @@ class Event(QWidget):
         super().__init__()
 
         # 1. Khởi tạo dữ liệu & Cấu hình
-        self.trans_settings = DEFAULT_SETTINGS.copy()
+        self.trans_settings = SETTINGS
         self.theme_manager = ThemeConfig()
 
         # 2. Khởi tạo các thành phần chuyên biệt
@@ -42,7 +42,9 @@ class Event(QWidget):
 
 
 class MouseEvent(Event):
-    """Lớp bổ trợ xử lý di chuyển và quét vùng chọn."""
+    """
+    Lớp bổ trợ xử lý di chuyển và quét vùng chọn.
+    """
 
     def mousePressEvent(self, event):
         """Bắt đầu quét hoặc di chuyển cửa sổ khi nhấn chuột."""
@@ -93,7 +95,7 @@ class MouseEvent(Event):
 # VẼ GIAO DIỆN & PHÍM TẮT
 # ================================================================
 class UIHandler(Event):
-    """Lớp bổ trợ vẽ khung chọn và phím tắt."""
+    """Lớp bổ trợ vẽ khung chọn và phím tắt.""" 
 
     def __init__(self):
         super().__init__()

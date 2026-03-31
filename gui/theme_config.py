@@ -35,7 +35,7 @@ class ThemeConfig:
                 "accent": "#27ae60",
                 "help_bg": "#f8f8f8",
                 "help_text": "#1a1a1a",
-                "panel_bg": "#f5f6fa",
+                "panel_bg": "#2c3e50",
                 "panel_border": "#cccccc",
                 "btn_fg": "#1a1a1a",
                 "btn_hover": "#e0e0e0",

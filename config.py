@@ -54,6 +54,8 @@ TESSERACT_EXE = os.path.join(TESSERACT_DIR, "tesseract.exe")
 HELP_DIALOG_HTML = os.path.join(HELP_DIALOG_DIR, "help.html")
 
 
+import json
+
 # ================================================================
 # 3. ĐỐI TƯỢNG CẤU HÌNH (APP SETTINGS)
 # ================================================================
@@ -63,18 +65,70 @@ class TranslationSettings:
     Thay thế Dictionary bằng Dataclass để có gợi ý code và kiểm soát kiểu dữ liệu.
     """
 
-    direction: str = "en-vi"
-    beam_size: int = 2
-    repetition_penalty: float = 1.5
-    no_repeat_ngram_size: int = 3
-    max_decoding_length: int = 256
-    font_size: int = 14
-    theme: str = "Tối"
+    _direction: str = "en-vi"
+    _beam_size: int = 4
+    _repetition_penalty: float = 1.5
+    _no_repeat_ngram_size: int = 3
+    _max_decoding_length: int = 256
+    _font_size: int = 17
+    _theme: str = "Sáng"
 
     def to_dict(self) -> Dict[str, Any]:
         """Chuyển đổi dataclass thành dictionary."""
-        return asdict(self)
+        results = {
+            "direction": self._direction,
+            "beam_size": self._beam_size,
+            "repetition_penalty": self._repetition_penalty,
+            "no_repeat_ngram_size": self._no_repeat_ngram_size,
+            "max_decoding_length": self._max_decoding_length,
+            "font_size": self._font_size,
+            "theme": self._theme,
+        }
+        return results
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]):
+        """Tạo instance từ dictionary."""
+        return cls(
+            _direction=data.get("direction", "en-vi"),
+            _beam_size=data.get("beam_size", 5),
+            _repetition_penalty=data.get("repetition_penalty", 1.5),
+            _no_repeat_ngram_size=data.get("no_repeat_ngram_size", 3),
+            _max_decoding_length=data.get("max_decoding_length", 256),
+            _font_size=data.get("font_size", 20),
+            _theme=data.get("theme", "Sáng"),
+        )
 
 
-# Tạo một instance mặc định
+# Đường dẫn file settings.json
+SETTINGS_JSON_PATH = PathManager.get_path("settings.json")
+
 DEFAULT_SETTINGS = TranslationSettings().to_dict()
+
+
+def save_settings(settings: Dict[str, Any], path: str = SETTINGS_JSON_PATH):
+    """Lưu cài đặt vào file JSON."""
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(settings, f, ensure_ascii=False, indent=4)
+    except Exception as e:
+        print(f"Lỗi khi lưu settings: {e}")
+
+def load_settings(path: str = SETTINGS_JSON_PATH) -> Dict[str, Any]:
+    """Đọc cài đặt từ file JSON, nếu không có thì trả về mặc định."""
+    if os.path.exists(path):
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            return TranslationSettings.from_dict(data).to_dict()
+        except Exception as e:
+            print(f"Lỗi khi đọc settings: {e}")
+    return DEFAULT_SETTINGS.copy()
+
+def reset_settings(path: str = SETTINGS_JSON_PATH):
+    """Đặt lại cài đặt về mặc định và lưu vào file JSON."""
+    save_settings(DEFAULT_SETTINGS, path)
+
+
+# Tạo một instance mặc định để sử dụng trong toàn bộ ứng dụng
+SETTINGS = load_settings()

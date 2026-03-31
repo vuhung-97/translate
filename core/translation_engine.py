@@ -9,7 +9,8 @@ SentencePiece để thực hiện dịch thuật giữa tiếng Anh và tiếng 
 """
 
 from typing import Dict, Any, List
-from config import DEFAULT_SETTINGS
+from config import SETTINGS
+
 
 class EnViT5Engine:
     """
@@ -85,22 +86,22 @@ class EnViT5Engine:
             [tokens],
             beam_size=settings.get(
                 'beam_size',
-                DEFAULT_SETTINGS['beam_size']
+                SETTINGS['beam_size']
             ),
 
             repetition_penalty=settings.get(
                 'repetition_penalty',
-                DEFAULT_SETTINGS['repetition_penalty']
+                SETTINGS['repetition_penalty']
             ),
 
             no_repeat_ngram_size=settings.get(
                 'no_repeat_ngram_size',
-                DEFAULT_SETTINGS['no_repeat_ngram_size']
+                SETTINGS['no_repeat_ngram_size']
             ),
 
             max_decoding_length=settings.get(
                 'max_decoding_length',
-                DEFAULT_SETTINGS['max_decoding_length']
+                SETTINGS['max_decoding_length']
             ),
         )
         return results[0].hypotheses[0]
