@@ -45,9 +45,17 @@ class EnViT5Application:
         self._app = QApplication(sys.argv)
 
     def _load_ai_engine(self):
+
         """Khởi tạo và cấu hình bộ não AI."""
         print("[DEBUG] Đang nạp BỘ NÃO AI...", flush=True)
         try:
+            print("📂 MODEL_DIR:", config.MODEL_DIR)
+            print("📂 EXISTS:", os.path.exists(config.MODEL_DIR))
+
+            if os.path.exists(config.MODEL_DIR):
+                print("📂 FILES:", os.listdir(config.MODEL_DIR))
+            else:
+                print("❌ MODEL KHÔNG TỒN TẠI")
             self._translator = ctranslate2.Translator(
                 config.MODEL_DIR,
                 device="cpu",
@@ -63,7 +71,7 @@ class EnViT5Application:
             # Đẩy vào engine trung tâm
             ai_engine.set_models(self._translator, self._tokenizer)
             print("✅ Hệ thống AI đã sẵn sàng!", flush=True)
-        except (OSError, RuntimeError) as e:
+        except Exception as e:
             print(f"❌ Lỗi nạp AI: {e}")
             sys.exit(1)
 
