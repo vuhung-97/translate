@@ -8,7 +8,6 @@ Nó giúp tách biệt hoàn toàn logic dịch thuật khỏi phần còn lại
 from PyQt6.QtCore import pyqtSignal, QObject
 
 # Các import từ dự án (giữ nguyên)
-from core.ocr_processor import OCRProcessor
 from core.easy_ocr_processor import EasyOCRProcessor
 from core.translation_worker import TranslationResult, TranslationWorker
 # ================================================================
