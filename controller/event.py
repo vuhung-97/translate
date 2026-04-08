@@ -7,9 +7,9 @@ Lớp bổ trợ xử lý di chuyển và quét vùng chọn.
 
 import io
 from PIL import Image
-from PyQt5.QtCore import QPoint, QRect, QBuffer, QIODevice, Qt
-from PyQt5.QtGui import QPainter, QColor, QPen
-from PyQt5.QtWidgets import QWidget, QApplication
+from PyQt6.QtCore import QPoint, QRect, QBuffer, QIODevice, Qt
+from PyQt6.QtGui import QPainter, QColor, QPen
+from PyQt6.QtWidgets import QWidget, QApplication
 from core.translation_service import TranslationService
 from gui.theme_config import ThemeConfig
 from gui.ui_components import OverlayManager
@@ -53,7 +53,7 @@ class MouseEvent(Event):
             self._start_pt = event.pos()
             self._end_pt = event.pos()
         else:
-            self._drag_offset = event.globalPos() - self.pos()
+            self._drag_offset = event.globalPosition().toPoint() - self.pos()
 
     def mouseMoveEvent(self, event):
         """Xử lý sự kiện di chuyển chuột."""
@@ -61,7 +61,7 @@ class MouseEvent(Event):
             self._end_pt = event.pos()
             self.update()
         elif self._drag_offset:
-            self.move(event.globalPos() - self._drag_offset)
+            self.move(event.globalPosition().toPoint() - self._drag_offset)
 
     def mouseReleaseEvent(self, event):
         """Xử lý sự kiện thả chuột."""
@@ -78,7 +78,7 @@ class MouseEvent(Event):
 
         # 1. Cắt ảnh từ snapshot
         buffer = QBuffer()
-        buffer.open(QIODevice.ReadWrite)
+        buffer.open(QIODevice.OpenModeFlag.ReadWrite)
         self._snapshot.copy(rect).save(buffer, "PNG")
         pil_img = Image.open(io.BytesIO(buffer.data()))
 
@@ -109,7 +109,7 @@ class UIHandler(Event):
         painter.fillRect(self.rect(), QColor(0, 0, 0, 120))  # Lớp phủ mờ
 
         if self._is_selecting:
-            pen = QPen(QColor("#2ecc71"), 2, Qt.DashLine)
+            pen = QPen(QColor("#2ecc71"), 2, Qt.PenStyle.DashLine)
             painter.setPen(pen)
             painter.drawRoundedRect(
                 QRect(self._start_pt, self._end_pt).normalized(), 10, 10
@@ -117,13 +117,18 @@ class UIHandler(Event):
 
     def keyPressEvent(self, event):
         """Xử lý sự kiện nhấn phím."""
-        if event.key() == Qt.Key_Escape:
+        if event.key() == Qt.Key.Key_Escape:
             self._toggle_scan_mode()
             event.accept()
             return
 
-        if event.key() in (Qt.Key_Return, Qt.Key_Enter):
+        if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
             self.overlay_manager.clear_all()
+            event.accept()
+            return
+        
+        if event.key() == Qt.Key.Key_Space:
+            self._switch_direction()
             event.accept()
             return
 

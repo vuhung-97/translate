@@ -45,14 +45,16 @@ class PathManager:
 
 
 # Các hằng số đường dẫn được định nghĩa tập trung
-MODEL_DIR = PathManager.get_path("models/model_envit5_fast")
-TESSERACT_DIR = PathManager.get_path("bin/Tesseract-OCR")
+MODEL_DIR = PathManager.get_path("models\\model_envit5_fast")
+TESSERACT_DIR = PathManager.get_path("bin\\Tesseract-OCR")
 HELP_DIALOG_DIR = PathManager.get_path("gui")
 
 TESSDATA_DIR = os.path.join(TESSERACT_DIR, "tessdata")
 TESSERACT_EXE = os.path.join(TESSERACT_DIR, "tesseract.exe")
 HELP_DIALOG_HTML = os.path.join(HELP_DIALOG_DIR, "help.html")
+ICON_PATH = PathManager.get_path("resources/app_icon.ico")
 
+EASYOCR_MODEL_DIR = PathManager.get_path("models\\.EasyOCR\\model") 
 
 import json
 
@@ -66,7 +68,7 @@ class TranslationSettings:
     """
 
     _direction: str = "en-vi"
-    _beam_size: int = 4
+    _beam_size: int = 5
     _repetition_penalty: float = 1.5
     _no_repeat_ngram_size: int = 3
     _max_decoding_length: int = 256
@@ -95,7 +97,7 @@ class TranslationSettings:
             _repetition_penalty=data.get("repetition_penalty", 1.5),
             _no_repeat_ngram_size=data.get("no_repeat_ngram_size", 3),
             _max_decoding_length=data.get("max_decoding_length", 256),
-            _font_size=data.get("font_size", 20),
+            _font_size=data.get("font_size", 17),
             _theme=data.get("theme", "Sáng"),
         )
 

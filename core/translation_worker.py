@@ -4,10 +4,10 @@ Module này định nghĩa lớp TranslationWorker
 Một luồng xử lý riêng biệt để thực hiện tác vụ dịch thuật.
 Nó giúp đảm bảo rằng giao diện người dùng (UI) vẫn mượt mà 
 và phản hồi nhanh chóng trong khi AI đang xử lý văn bản.
-TranslationWorker sử dụng PyQt5.QtCore.QThread để chạy tác vụ dịch thuật trong nền
+TranslationWorker sử dụng PyQt6.QtCore.QThread để chạy tác vụ dịch thuật trong nền
 """
 from dataclasses import dataclass
-from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt6.QtCore import QThread, pyqtSignal
 
 # Các import từ dự án (giữ nguyên)
 from core.translation_engine import ai_engine

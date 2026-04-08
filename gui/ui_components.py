@@ -1,6 +1,6 @@
 # pylint: disable=missing-function-docstring, missing-class-docstring, missing-module-docstring, too-few-public-methods, no-name-in-module, import-error
 from typing import Dict, Any
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QDialog,
     QScrollArea,
     QTextBrowser,
@@ -15,10 +15,10 @@ from PyQt5.QtWidgets import (
     QWidget,
     QLabel,
 )
-from PyQt5.QtCore import Qt
+from PyQt6.QtCore import Qt
 
 # Import thực thể AI đã được khởi tạo từ engine
-from config import SETTINGS, HELP_DIALOG_HTML, save_settings
+from config import SETTINGS, HELP_DIALOG_HTML, save_settings, DEFAULT_SETTINGS
 
 
 
@@ -33,9 +33,10 @@ class SettingsDialog(QDialog):
     def __init__(self, current_settings: Dict[str, Any], parent=None):
         super().__init__(parent)
         self.settings = current_settings
-        self.default_values = SETTINGS
+        self.setting_values = SETTINGS
+        self.default_values = DEFAULT_SETTINGS
 
-        self.setWindowTitle("Cấu hình bộ não EnViT5")
+        self.setWindowTitle("Cấu hình AI & Giao diện")
         self.setFixedSize(450, 350)
         self.apply_styles()
         self.controls = {}
@@ -131,7 +132,8 @@ class SettingsDialog(QDialog):
         self.btn_reset.clicked.connect(self.reset_to_defaults)
 
         self.button_box = QDialogButtonBox(
-            QDialogButtonBox.Ok | QDialogButtonBox.Cancel
+            QDialogButtonBox.StandardButton.Ok |
+            QDialogButtonBox.StandardButton.Cancel
         )
         self.button_box.accepted.connect(self.save_and_accept)
         self.button_box.rejected.connect(self.reject)
@@ -147,7 +149,7 @@ class SettingsDialog(QDialog):
         self.accept()
 
     def reset_to_defaults(self):
-        """Đặt lại tất cả các widget về giá trị trong SETTINGS."""
+        """Đặt lại tất cả các widget về giá trị mặc định trong SETTINGS."""
         for key, widget in self.controls.items():
             if key in self.default_values:
                 if isinstance(widget, QComboBox):
@@ -173,7 +175,7 @@ class HelpDialog(QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Hướng dẫn sử dụng EnViT5")
+        self.setWindowTitle("Hướng dẫn sử dụng SmartTranslator_EnViT5 app")
         self.setFixedSize(520, 620)
         self.initUI()
 
@@ -188,7 +190,7 @@ class HelpDialog(QDialog):
             html_content = "<b>Lỗi: Không tìm thấy file hướng dẫn help.html</b>"
         self.text_browser.setHtml(html_content)
         layout.addWidget(self.text_browser)
-        buttons = QDialogButtonBox(QDialogButtonBox.Close)
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
 
@@ -204,13 +206,13 @@ class SmartTranslatorUI:
     def setup_ui(self, target):
         # target ở đây chính là đối tượng SmartTranslator (self)
         target.setWindowFlags(
-            Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool
+            Qt.WindowType.FramelessWindowHint | \
+            Qt.WindowType.WindowStaysOnTopHint
         )
-        target.setAttribute(Qt.WA_TranslucentBackground)
+        target.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         # 2. Lấy cấu hình màu trực tiếp từ ThemeManager của target
-        # Đảm bảo target đã khởi tạo self.theme_manager trước khi gọi hàm này
-        current_theme_name = target.trans_settings.get("theme", "Tối")
+        current_theme_name = target.trans_settings.get("theme", "Sáng")
         colors = target.theme_manager.get_theme(current_theme_name)
 
         # Tạo Panel chính
@@ -237,7 +239,7 @@ class SmartTranslatorUI:
         # Khởi tạo các nút (Gán trực tiếp vào target để file chính dễ truy cập)
         btn_colors = colors["button_colors"]
 
-        target.btn_direction = QPushButton("En ➔ Vi")
+        target.btn_direction = QPushButton("En ➔ Vi (Space)")
         target.btn_direction.setStyleSheet(
             f"background-color: {btn_colors['direction']}; width: 85px;"
         )
@@ -290,7 +292,7 @@ class OverlayManager:
 
     def create_result_box(self, rect, font_size):
         colors = self.theme_manager.get_theme(
-            self.parent.trans_settings.get("theme", "Tối")
+            self.parent.trans_settings.get("theme", "Sáng")
         )
         normalized_rect = rect.normalized()
         width = max(normalized_rect.width(), self._MIN_RESULT_WIDTH)
@@ -299,8 +301,8 @@ class OverlayManager:
         scroll = QScrollArea(self.parent)
         scroll.setGeometry(normalized_rect.x(), normalized_rect.y(), width, height)
         scroll.setWidgetResizable(True)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        scroll.setAttribute(Qt.WA_DeleteOnClose)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
 
         # Style cho ScrollArea
         scroll.setStyleSheet(f"""

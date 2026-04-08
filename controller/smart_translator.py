@@ -5,8 +5,8 @@ Module này định nghĩa lớp SmartTranslator
 Lớp điều phối chính - Kết nối UI, Chụp màn hình và Dịch thuật.
 """
 
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import Qt
+from PyQt6.QtWidgets import QApplication
+from PyQt6.QtCore import Qt
 
 # Các import từ dự án (giữ nguyên)
 from gui.ui_components import SettingsDialog, HelpDialog, SmartTranslatorUI
@@ -24,7 +24,7 @@ class SmartTranslator(MouseEvent, UIHandler):
         self.ui_builder.setup_ui(self)
         self._set_compact_mode()
         self._connect_signals()
-        self.setFocusPolicy(Qt.StrongFocus)
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.show()
 
     def _connect_signals(self):
@@ -41,21 +41,20 @@ class SmartTranslator(MouseEvent, UIHandler):
             self.trans_settings.get('theme', 'Tối'))['button_colors']
         if self.trans_settings.get('direction') == 'en-vi':
             self.trans_settings['direction'] = 'vi-en'
-            self.btn_direction.setText("Vi ➔ En")
+            self.btn_direction.setText("Vi ➔ En (Space)")
             self.btn_direction.setStyleSheet(
                 f"background-color: {btn_colors['direction_active']}; width: 85px;")
         else:
             self.trans_settings['direction'] = 'en-vi'
-            self.btn_direction.setText("En ➔ Vi")
+            self.btn_direction.setText("En ➔ Vi (Space)")
             self.btn_direction.setStyleSheet(
                 f"background-color: {btn_colors['direction']}; width: 85px;")
 
     def _open_help(self):
         dialog = HelpDialog(self)
-        dialog.exec_()
+        dialog.exec()
 
     def _open_settings(self):
         dialog = SettingsDialog(self.trans_settings, self)
-        if dialog.exec_():
+        if dialog.exec():
             self.trans_settings.update(dialog.get_values())
-            

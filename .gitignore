@@ -12,6 +12,7 @@ env/
 venv/
 build/
 dist/
+dist_1/
 *.egg-info/
 .eggs/
 *.spec
@@ -57,7 +58,7 @@ Thumbs.db
 Desktop.ini
 
 # Tesseract-OCR build artifacts
-bin/Tesseract-OCR
+bin
 
 # Logs
 *.log
@@ -70,3 +71,4 @@ bin/Tesseract-OCR
 # file temp
 temp.py
 unit_test.py
+ocr_test.py

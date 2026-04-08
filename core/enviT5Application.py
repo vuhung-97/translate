@@ -1,91 +1,80 @@
-"""
-Module chính khởi chạy ứng dụng. 
-Đóng vai trò là điểm vào duy nhất, chịu trách nhiệm:
-- Thiết lập môi trường hệ thống (ưu tiên CPU, biến môi trường)
-- Khởi tạo và cấu hình bộ não AI (CTranslate2 + SentencePiece)
-- Khởi tạo giao diện người dùng (SmartTranslator)
-- Điều phối các thành phần chính và bắt đầu vòng lặp sự kiện của Qt
-"""
-import sys
+# 1. IMPORT CÁC THƯ VIỆN CẦN THIẾT
 import os
-from psutil import Process, HIGH_PRIORITY_CLASS, AccessDenied, NoSuchProcess
-import ctranslate2
+import sys
+
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+# Ngăn Qt can thiệp vào bộ nhớ trước khi AI sẵn sàng
+os.environ["QT_NO_LIBREALSENSE"] = "1"
+
+os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
+
 import sentencepiece as spm
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import Qt
+import ctranslate2 
 import config
-from controller.smart_translator import SmartTranslator
-from core.translation_engine import ai_engine
 
-
-class EnViT5Application:
-    """
-    Class đóng gói toàn bộ quy trình khởi tạo và điều phối ứng dụng.
-    """
-
-    def __init__(self):
-        self._app = None
-        self._main_window = None
-        self._translator = None
-        self._tokenizer = None
-
-    def _setup_system_priority(self):
-        """Thiết lập ưu tiên xử lý cho CPU."""
-        if sys.platform == "win32":  # Kiểm tra hệ điều hành để tránh crash
-            try:
-                p = Process(os.getpid())
-                p.nice(HIGH_PRIORITY_CLASS)
-            except (OSError, AccessDenied, NoSuchProcess):
-                print("⚠️ Không thể thiết lập ưu tiên cao.")
-
-    def _init_qt_environment(self):
-        """Cấu hình môi trường hiển thị."""
-        QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
-        QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
-        self._app = QApplication(sys.argv)
-
-    def _load_ai_engine(self):
-
-        """Khởi tạo và cấu hình bộ não AI."""
+class EnViT5_Application:
+    # 2. KHỞI TẠO TÀI NGUYÊN AI
+    def load_ai_assets(self):
         print("[DEBUG] Đang nạp BỘ NÃO AI...", flush=True)
+
+        model_dir = config.MODEL_DIR
+        spiece_path = os.path.join(model_dir, "spiece.model")
+        print(f"[*] Model Dir: {model_dir}")
+        print(f"[*] Spiece Path: {spiece_path}")
+
         try:
-            print("📂 MODEL_DIR:", config.MODEL_DIR)
-            print("📂 EXISTS:", os.path.exists(config.MODEL_DIR))
+            # --- BƯỚC 1: NẠP SENTENCEPIECE TỪ BỘ NHỚ (GIẢI PHÁP MẠNH NHẤT) ---
 
-            if os.path.exists(config.MODEL_DIR):
-                print("📂 FILES:", os.listdir(config.MODEL_DIR))
-            else:
-                print("❌ MODEL KHÔNG TỒN TẠI")
-            self._translator = ctranslate2.Translator(
-                config.MODEL_DIR,
-                device="cpu",
+            print("\n[1/2] Dang nap SentencePiece...")
+            tokenizer = spm.SentencePieceProcessor()
+
+            with open(spiece_path, "rb") as f:
+                model_bytes = f.read()
+
+            tokenizer.load_from_serialized_proto(model_bytes)
+
+            # tokenizer.load(spiece_path)
+            print("✅ SentencePiece: OK!")
+
+            # --- BƯỚC 2: NẠP TRANSLATOR ---
+            print("\n[2/2] Dang nap CTranslate2 Translator...")
+            
+            translator = ctranslate2.Translator(
+                str(model_dir), 
+                device="cpu", 
                 compute_type="int8",
-                inter_threads=1,
-                intra_threads=getattr(
-                    config, "DEFAULT_THREADS", 4
-                ),  # Dùng config thay vì hard-code
+                inter_threads=1, 
+                intra_threads=4 
             )
-            self._tokenizer = spm.SentencePieceProcessor()
-            self._tokenizer.load(os.path.join(config.MODEL_DIR, "spiece.model"))
+            
+            print("✅ CTranslate2: OK!", flush=True)
 
-            # Đẩy vào engine trung tâm
-            ai_engine.set_models(self._translator, self._tokenizer)
-            print("✅ Hệ thống AI đã sẵn sàng!", flush=True)
+            from core.translation_engine import ai_engine
+            ai_engine.set_models(translator, tokenizer)
+            
         except Exception as e:
-            print(f"❌ Lỗi nạp AI: {e}")
+            import traceback
+            traceback.print_exc()
+            print(f"❌ Lỗi: {e}", flush=True)
             sys.exit(1)
 
-    def run(self):
-        """
-        Phương thức Public duy nhất để khởi chạy ứng dụng.
-        Mẫu thiết kế: Facade Pattern - ẩn đi sự phức tạp bên trong.
-        """
-        self._setup_system_priority()
-        self._init_qt_environment()
-        self._load_ai_engine()
+    # 3. ĐIỀU PHỐI HỆ THỐNG VÀ GIAO DIỆN
+    def bootstrap_application(self):
+        """Khởi động toàn bộ thành phần hệ thống và giao diện."""
 
-        # Khởi tạo cửa sổ chính
-        self._main_window = SmartTranslator()
-        self._main_window.show()
+        # --- Khởi chạy Giao diện người dùng ---
+        # Kích hoạt chế độ hỗ trợ màn hình độ phân giải cao (High DPI)
+        
+        from PyQt6.QtWidgets import QApplication
+        from PyQt6.QtGui import QIcon
+        from config import ICON_PATH
 
-        return self._app.exec_()
+        app = QApplication(sys.argv)
+        app.setWindowIcon(QIcon(ICON_PATH))  # Thêm icon cho ứng dụng
+
+        # Nạp giao diện chính từ main_window.py
+        from controller.smart_translator import SmartTranslator
+        main_window = SmartTranslator() 
+        
+        # Bắt đầu vòng lặp sự kiện của ứng dụng
+        sys.exit(app.exec())

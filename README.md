@@ -116,20 +116,29 @@ translate2/
 Chạy lệnh sau để đóng gói toàn bộ ứng dụng vào một thư mục (dist/SmartTranslator_EnViT5):
 
 ```powershell
-pyinstaller --noconfirm --onedir --windowed --name "SmartTranslator_EnViT5" ^
-    --add-data "models;models" ^
-    --add-data "bin;bin" ^
-    --add-data "gui;gui" ^
-    --add-data "core;core" ^
-    --add-data "controller;controller" ^
-    --add-data "resources;resources" ^
+pyinstaller --noconfirm --onedir --noconsole `
+    --name "SmartTranslator_EnViT5" `
+    --add-data "models;models" `
+    --add-data "gui;gui" `
+    --add-data "bin;bin" `
+    --add-data "core;core" `
+    --add-data "controller;controller" `
+    --add-data "settings.json;." `
+    --add-data "resources;resources" `
+    --collect-all ctranslate2 `
+    --collect-all sentencepiece `
+    --collect-all PyQt6 `
+    --hidden-import "PyQt6.QtCore" `
+    --hidden-import "PyQt6.QtWidgets" `
+    --hidden-import "PyQt6.QtGui" `
+    --clean `
     main.py
 ```
 
 - Thư mục dist/SmartTranslator_EnViT5 sẽ chứa file thực thi và toàn bộ tài nguyên cần thiết.
 - Khi chạy, cần giữ nguyên cấu trúc thư mục như trên.
 
-### Đóng gói thành 1 file (không khuyến nghị với app lớn)
+### Đóng gói thành 1 file
 
 Có thể dùng `--onefile`, nhưng thời gian khởi động sẽ lâu hơn và có thể gặp lỗi với các file dữ liệu lớn.
 

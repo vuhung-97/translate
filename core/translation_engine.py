@@ -25,7 +25,7 @@ class EnViT5Engine:
 
     def __new__(cls):
         if cls._instance is None:
-            print("--- Khởi tạo bộ não AI duy nhất (Nạp mô hình vào VRAM) ---")
+            # --- Khởi tạo bộ não AI duy nhất (Nạp mô hình vào VRAM) ---"
             cls._instance = super(EnViT5Engine, cls).__new__(cls)
             # Khởi tạo các thuộc tính thực sự ở đây
             cls._instance._translator = None
