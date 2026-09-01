@@ -1,57 +1,66 @@
-# pylint: disable=no-name-in-module, import-error, too-few-public-methods, broad-exception-caught
 """
-Module này định nghĩa lớp TranslationWorker
-Một luồng xử lý riêng biệt để thực hiện tác vụ dịch thuật.
-Nó giúp đảm bảo rằng giao diện người dùng (UI) vẫn mượt mà 
-và phản hồi nhanh chóng trong khi AI đang xử lý văn bản.
-TranslationWorker sử dụng PyQt6.QtCore.QThread để chạy tác vụ dịch thuật trong nền
+TranslationWorker xử lý tác vụ dịch thuật bất đồng bộ trên luồng QThread phụ.
+Giúp giữ cho giao diện PyQt6 mượt mà không bị treo/đóng băng khi AI đang suy luận.
 """
+
 from dataclasses import dataclass
+from typing import Dict, Any
 from PyQt6.QtCore import QThread, pyqtSignal
 
-# Các import từ dự án (giữ nguyên)
-from core.translation_engine import ai_engine
+from core.translation_engine import ai_engine, EnViT5Engine
+from utils.logger import logger
+from utils.exceptions import TranslationError
+
 
 @dataclass
 class TranslationResult:
-    """Đóng gói kết quả dịch thuật cùng với thông tin vị trí."""
+    """Đóng gói dữ liệu văn bản nhận diện cùng tọa độ hiển thị."""
     text: str
-    x: int
-    y: int
-    width: int
+    x: int = 0
+    y: int = 0
+    width: int = 0
 
-# ================================================================
-# LUỒNG XỬ LÝ DỊCH THUẬT (BACKGROUND WORKER)
-# ================================================================
+
 class TranslationWorker(QThread):
     """
-    Luồng xử lý riêng biệt để thực hiện dịch thuật mà không gây treo giao diện chính (UI).
+    Luồng phụ thực thi suy luận mô hình AI trong nền.
     """
 
-    # Tín hiệu phát ra khi dịch xong: (kết quả, x, y, width)
+    # Signal phát ra khi hoàn thành: (kết quả dịch, x, y, width)
     finished = pyqtSignal(str, int, int, int)
+    error_occurred = pyqtSignal(str)
 
     def __init__(
         self,
         result: TranslationResult,
-        settings: dict[str, any],
-        engine=ai_engine,
+        settings: Dict[str, Any],
+        engine: EnViT5Engine = ai_engine,
+        parent=None
     ):
-        super().__init__()
-        self.engine = engine
+        super().__init__(parent)
         self.result = result
         self.settings = settings
+        self.engine = engine
 
     def run(self):
-        """Thực thi tác vụ dịch thuật trong luồng phụ."""
+        """Thực thi dịch thuật trong luồng phụ QThread."""
+        logger.info(f"[TranslationWorker] Bắt đầu suy luận cho câu: '{self.result.text[:40]}...'")
         try:
-            # Gọi hàm dịch từ engine trung tâm
-            result = self.engine.translate_text(self.result.text, self.settings)
-            self.finished.emit(result, self.result.x, self.result.y, self.result.width)
-        except Exception as e:
-            # Trả về thông báo lỗi nếu quá trình dịch thất bại
+            translated_text = self.engine.translate_text(self.result.text, self.settings)
+            logger.info(f"[TranslationWorker] Suy luận thành công ({len(translated_text)} chars).")
             self.finished.emit(
-                f"⚠️ Lỗi AI: {str(e)}",
+                translated_text,
                 self.result.x,
                 self.result.y,
-                self.result.width)
+                self.result.width
+            )
+        except Exception as e:
+            error_msg = f"⚠️ Lỗi AI: {str(e)}"
+            logger.error(f"[TranslationWorker] Xảy ra ngoại lệ: {e}", exc_info=True)
+            self.error_occurred.emit(error_msg)
+            self.finished.emit(
+                error_msg,
+                self.result.x,
+                self.result.y,
+                self.result.width
+            )

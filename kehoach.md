@@ -95,13 +95,13 @@ translate2/
 - **Bước 3.3**: Chuẩn hóa `SettingsDialog` (`gui/windows/settings_dialog.py`), `HelpDialog` (`gui/windows/help_dialog.py`), `ThemeConfig` (`gui/theme.py`) thành các module chuyên biệt. [HOÀN THÀNH ✅]
 - **Bước 3.4**: Refactor `SmartTranslator` (`controller/smart_translator.py`) đóng vai trò Controller kết nối UI mượt mà không dùng đa thừa kế. [HOÀN THÀNH ✅]
 
-### 🔹 Giai đoạn 4: Tầng Service & Luồng xử lý Bất đồng bộ (Async Workers)
+### 🔹 Giai đoạn 4: Tầng Service & Luồng xử lý Bất đồng bộ (Async Workers) - [HOÀN THÀNH ✅]
 - **Bước 4.1**: Tái cấu trúc `TranslationWorker(QThread)`:
-  - Gửi dữ liệu qua signals/slots an toàn (thread-safe).
-  - Bổ sung cơ chế xử lý lỗi trong thread để gửi báo lỗi lên UI mượt mà.
+  - Gửi dữ liệu qua signals/slots an toàn (thread-safe). [HOÀN THÀNH ✅]
+  - Bổ sung cơ chế ghi log và bắt ngoại lệ trong luồng phụ. [HOÀN THÀNH ✅]
 - **Bước 4.2**: Refactor `TranslationService`:
-  - Nhận yêu cầu dịch từ `SelectionOverlayWindow`, gọi `OCRFactory` thực thi OCR, sau đó kích hoạt `TranslationWorker`.
-  - Quản lý danh sách luồng đang chạy (`_active_workers`) an toàn.
+  - Nhận yêu cầu dịch từ `SelectionOverlayWindow`, gọi `OCRFactory` thực thi OCR, kích hoạt `TranslationWorker`. [HOÀN THÀNH ✅]
+  - Quản lý danh sách luồng đang chạy (`_active_workers`) an toàn và tự động thu hồi tài nguyên `deleteLater()`. [HOÀN THÀNH ✅]
 
 ### 🔹 Giai đoạn 5: Tối ưu hóa Trải nghiệm & Tính năng Nâng cao (UX & Upgrades)
 - **Bước 5.1**: Hỗ trợ chuyển đổi Engine OCR trực tiếp trong cửa sổ Cài đặt (`SettingsDialog`).

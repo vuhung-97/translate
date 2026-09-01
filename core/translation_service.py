@@ -1,8 +1,10 @@
 """
 Module định nghĩa TranslationService.
 Điều phối quy trình Ảnh -> OCR -> AI Translation -> Cập nhật UI.
+Quản lý vòng đời QThread an toàn tránh rò rỉ bộ nhớ.
 """
 
+from typing import List
 from PyQt6.QtCore import pyqtSignal, QObject
 from PIL import Image
 
@@ -20,7 +22,7 @@ class TranslationService(QObject):
     def __init__(self, config_or_settings):
         super().__init__()
         self.settings = config_or_settings
-        self._active_workers = []
+        self._active_workers: List[TranslationWorker] = []
 
     def process_image(self, pil_img: Image.Image, target_label):
         """
@@ -48,19 +50,33 @@ class TranslationService(QObject):
             target_label.setText(f"⚠️ Lỗi OCR: {e}")
 
     def _start_worker(self, text: str, target_label):
-        """Khởi động QThread dịch thuật trong nền."""
+        """Khởi động QThread dịch thuật trong nền và đăng ký hàm dọn dẹp tài nguyên."""
         result = TranslationResult(text=text, x=0, y=0, width=0)
         
         # Lấy dict settings
-        settings_dict = self.settings.settings.to_dict() if hasattr(self.settings, "settings") else self.settings
+        settings_dict = (
+            self.settings.settings.to_dict()
+            if hasattr(self.settings, "settings")
+            else self.settings
+        )
         
         worker = TranslationWorker(result, settings_dict)
+        
+        # Connect signals
         worker.finished.connect(lambda res_text, _x, _y, _w: target_label.setText(res_text))
         worker.finished.connect(lambda _res, _x, _y, _w: self._cleanup_worker(worker))
         
         self._active_workers.append(worker)
         worker.start()
 
-    def _cleanup_worker(self, worker):
+    def _cleanup_worker(self, worker: TranslationWorker):
+        """Dọn dẹp worker khỏi danh sách đang chạy và hủy thread handles."""
         if worker in self._active_workers:
             self._active_workers.remove(worker)
+        try:
+            worker.quit()
+            worker.wait(1000)
+            worker.deleteLater()
+            logger.info("Đã dọn dẹp QThread worker thành công.")
+        except Exception as e:
+            logger.warning(f"Lỗi dọn dẹp QThread worker: {e}")
