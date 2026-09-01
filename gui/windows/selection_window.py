@@ -1,6 +1,6 @@
 """
 Cửa sổ lớp phủ toàn màn hình (SelectionOverlayWindow) xử lý việc chọn vùng màn hình cần dịch.
-Hỗ trợ High-DPI Scaling và Đa màn hình (Multi-Monitor).
+Hỗ trợ High-DPI Scaling, Đa màn hình (Multi-Monitor) và khóa cứng dữ liệu ảnh khoanh vùng.
 """
 
 import io
@@ -23,7 +23,7 @@ class SelectionOverlayWindow(QWidget):
     clear_requested = pyqtSignal()
     direction_switch_requested = pyqtSignal()
 
-    def __init__(self):
+    def __init__(self, toolbar_rect_provider=None):
         super().__init__()
         self.setWindowFlags(
             Qt.WindowType.FramelessWindowHint |
@@ -32,6 +32,7 @@ class SelectionOverlayWindow(QWidget):
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         
+        self.toolbar_rect_provider = toolbar_rect_provider
         self._is_selecting = False
         self._start_pt = QPoint()
         self._end_pt = QPoint()
@@ -50,7 +51,7 @@ class SelectionOverlayWindow(QWidget):
             self.setWindowOpacity(0)
             QApplication.processEvents()
             
-            # Grab window screenshot for the selected screen
+            # Chụp ảnh snapshot màn hình hiện tại
             self._snapshot = screen.grabWindow(0)
             logger.info(f"Đã chụp snapshot màn hình '{screen.name()}' size={self._snapshot.width()}x{self._snapshot.height()}")
 
@@ -73,6 +74,12 @@ class SelectionOverlayWindow(QWidget):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
+            # Nếu vị trí click nằm trong vùng Toolbar Window thì không chọn
+            if self.toolbar_rect_provider:
+                toolbar_rect = self.toolbar_rect_provider()
+                if toolbar_rect.contains(event.globalPosition().toPoint()):
+                    return
+
             self._is_selecting = True
             self._start_pt = event.pos()
             self._end_pt = event.pos()
@@ -102,7 +109,11 @@ class SelectionOverlayWindow(QWidget):
                 buffer = QBuffer()
                 buffer.open(QIODevice.OpenModeFlag.ReadWrite)
                 cropped_pixmap.save(buffer, "PNG")
-                pil_img = Image.open(io.BytesIO(buffer.data()))
+                raw_bytes = bytes(buffer.data())
+                buffer.close()
+
+                # KHÓA CỨNG ĐIỂM ẢNH TRONG BỘ NHỚ RAM TRÁNH LAZY LOADING CỦA PIL
+                pil_img = Image.open(io.BytesIO(raw_bytes)).convert("RGB").copy()
 
                 self.close()
                 self.selection_completed.emit(pil_img, rect)

@@ -1,7 +1,9 @@
 {
-    "beam_size": 5,
-    "repetition_penalty": 1.5,
-    "no_repeat_ngram_size": 3,
+    "direction": "vi-en",
+    "ocr_engine": "easyocr",
+    "beam_size": 9,
+    "repetition_penalty": 1.8000000000000003,
+    "no_repeat_ngram_size": 4,
     "max_decoding_length": 256,
     "font_size": 17,
     "theme": "Sáng"

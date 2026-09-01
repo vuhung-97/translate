@@ -1,7 +1,6 @@
 """
 Controller chính của ứng dụng SmartTranslator.
 Điều phối kết nối giữa Toolbar UI, Overlay Scan Window, Result Overlays và TranslationService.
-Loại bỏ hoàn toàn đa thừa kế (Multiple Inheritance).
 """
 
 from PyQt6.QtWidgets import QApplication
@@ -29,6 +28,7 @@ class SmartTranslator(ToolbarWindow):
         self.overlay_manager = ResultOverlayManager(parent_widget=None)
         self.trans_service = TranslationService(config_manager)
         self.selection_window = None
+        self._is_scanning = False
 
         # 2. Kết nối Tín hiệu (Signals)
         self._connect_controller_signals()
@@ -49,14 +49,27 @@ class SmartTranslator(ToolbarWindow):
         self.exit_clicked.connect(QApplication.quit)
 
     def _toggle_scan_mode(self):
-        """Khởi động cửa sổ quét toàn màn hình (SelectionOverlayWindow)."""
+        """Khởi động hoặc thu nhỏ chế độ quét màn hình."""
+        if self._is_scanning:
+            self._close_scan_mode()
+        else:
+            self._open_scan_mode()
+
+    def _open_scan_mode(self):
+        """Mở lớp phủ mờ toàn màn hình để chọn vùng quét."""
         if self.selection_window is not None:
             try:
                 self.selection_window.close()
             except Exception:
                 pass
 
-        self.selection_window = SelectionOverlayWindow()
+        self._is_scanning = True
+        self.btn_quet_toggle.setText("🔙 Thu nhỏ (Esc)")
+
+        # Tạo SelectionOverlayWindow với provider vị trí Toolbar
+        self.selection_window = SelectionOverlayWindow(
+            toolbar_rect_provider=lambda: self.frameGeometry()
+        )
         self.selection_window.selection_completed.connect(self._on_selection_completed)
         self.selection_window.cancelled.connect(self._on_selection_cancelled)
         self.selection_window.clear_requested.connect(self.overlay_manager.clear_all)
@@ -64,12 +77,28 @@ class SmartTranslator(ToolbarWindow):
         
         self.selection_window.start_selection()
 
+        # Đưa ToolbarWindow lên trên cùng của lớp phủ mờ để tương tác nút bấm
+        self.raise_()
+        self.activateWindow()
+
+    def _close_scan_mode(self):
+        """Đóng chế độ quét và chuyển về Toolbar nhỏ gọn."""
+        self._is_scanning = False
+        self.btn_quet_toggle.setText("🔍 Quét (Esc)")
+        if self.selection_window is not None:
+            try:
+                self.selection_window.close()
+            except Exception:
+                pass
+            self.selection_window = None
+
     def _on_selection_completed(self, pil_img, rect: QRect):
         """Xử lý khi người dùng hoàn thành việc khoanh vùng chữ trên màn hình."""
+        self._close_scan_mode()
         font_size = config_manager.get("font_size", 17)
         theme_name = config_manager.get("theme", "Sáng")
 
-        # 1. Tạo ô hiển thị kết quả tại vùng chọn
+        # 1. Tạo ô hiển thị kết quả nổi trực tiếp tại vùng chọn (Frameless Floating Window)
         target_label = self.overlay_manager.create_result_box(
             rect=rect, font_size=font_size, theme_name=theme_name
         )
@@ -78,6 +107,7 @@ class SmartTranslator(ToolbarWindow):
         self.trans_service.process_image(pil_img, target_label)
 
     def _on_selection_cancelled(self):
+        self._close_scan_mode()
         logger.info("Đã hủy chế độ chọn vùng màn hình.")
 
     def _switch_direction(self):

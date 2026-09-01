@@ -1,9 +1,9 @@
 """
-ResultOverlayManager quản lý các khung QLabel/QScrollArea hiển thị bản dịch nổi trên màn hình.
+ResultOverlayManager quản lý các khung QLabel/QScrollArea hiển thị bản dịch nổi trực tiếp trên màn hình.
 """
 
 from typing import List, Optional
-from PyQt6.QtWidgets import QScrollArea, QLabel, QWidget, QApplication
+from PyQt6.QtWidgets import QScrollArea, QLabel, QWidget
 from PyQt6.QtCore import Qt, QRect
 
 from gui.theme import theme_manager
@@ -12,7 +12,7 @@ from utils.logger import logger
 
 class ResultOverlayManager:
     """
-    Quản lý tập hợp các khung hiển thị kết quả dịch thuật trên màn hình.
+    Quản lý tập hợp các khung hiển thị kết quả dịch thuật nổi trực tiếp trên màn hình (Floating Frameless Overlay).
     """
 
     _MIN_RESULT_WIDTH = 150
@@ -24,7 +24,7 @@ class ResultOverlayManager:
 
     def create_result_box(self, rect: QRect, font_size: int = 14, theme_name: str = "Sáng") -> QLabel:
         """
-        Tạo khung cuộn QScrollArea tại tọa độ chọn và trả về QLabel bên trong để cập nhật văn bản.
+        Tạo khung cuộn QScrollArea nổi không khung viền tại tọa độ chọn và trả về QLabel bên trong.
         """
         colors = theme_manager.get_theme(theme_name)
         normalized_rect = rect.normalized()
@@ -32,6 +32,12 @@ class ResultOverlayManager:
         height = max(normalized_rect.height(), self._MIN_RESULT_HEIGHT)
 
         scroll = QScrollArea(self.parent)
+        scroll.setWindowFlags(
+            Qt.WindowType.FramelessWindowHint |
+            Qt.WindowType.WindowStaysOnTopHint |
+            Qt.WindowType.Tool
+        )
+        scroll.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         scroll.setGeometry(normalized_rect.x(), normalized_rect.y(), width, height)
         scroll.setWidgetResizable(True)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -68,7 +74,7 @@ class ResultOverlayManager:
         scroll.setWidget(label)
         scroll.show()
         self.results.append(scroll)
-        logger.info(f"Đã tạo Result Box tại position=({normalized_rect.x()}, {normalized_rect.y()}), size=({width}x{height})")
+        logger.info(f"Đã tạo Result Box nổi tại position=({normalized_rect.x()}, {normalized_rect.y()}), size=({width}x{height})")
         return label
 
     def clear_all(self):
@@ -79,4 +85,4 @@ class ResultOverlayManager:
             except Exception:
                 pass
         self.results.clear()
-        logger.info("Đã xóa tất cảResult Overlay Boxes.")
+        logger.info("Đã xóa tất cả Result Overlay Boxes.")
