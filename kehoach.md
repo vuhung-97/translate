@@ -68,22 +68,23 @@ translate2/
 
 ## 🚩 3. Các Giai đoạn Thực thi Chi tiết (Detailed Execution Phases)
 
-### 🔹 Giai đoạn 1: Chuẩn hóa Hạ tầng (Infrastructure, Logging & Config)
-- **Bước 1.1**: Xây dựng `utils/logger.py` cung cấp module ghi log tập trung (hỗ trợ hiển thị console có màu và ghi file `app.log`).
-- **Bước 1.2**: Định nghĩa `utils/exceptions.py` với các lớp lỗi tùy chỉnh để dễ khoanh vùng bug (`ModelNotFoundError`, `OCRProcessingError`, v.v.).
+### 🔹 Giai đoạn 1: Chuẩn hóa Hạ tầng (Infrastructure, Logging & Config) - [HOÀN THÀNH ✅]
+- **Bước 1.1**: Xây dựng `utils/logger.py` cung cấp module ghi log tập trung (hỗ trợ hiển thị console và ghi file `app.log`). [HOÀN THÀNH ✅]
+- **Bước 1.2**: Định nghĩa `utils/exceptions.py` và `utils/path_manager.py` với các lớp lỗi tùy chỉnh để dễ khoanh vùng bug. [HOÀN THÀNH ✅]
 - **Bước 1.3**: Chuẩn hóa `config/config_manager.py` theo mẫu Singleton & Dataclass:
   - Đóng gói dữ liệu cấu hình type-safe (`TranslationSettings`).
   - Hỗ trợ tự động tải/lưu file `settings.json`, bao gồm cơ chế fallback giá trị mặc định an toàn.
+  - Cập nhật `config/__init__.py` tương thích ngược hoàn toàn. [HOÀN THÀNH ✅]
 
-### 🔹 Giai đoạn 2: Tái cấu trúc Tầng Core (AI Engine & OCR Strategy Pattern)
+### 🔹 Giai đoạn 2: Tái cấu trúc Tầng Core (AI Engine & OCR Strategy Pattern) - [HOÀN THÀNH ✅]
 - **Bước 2.1**: Refactor `core/translation_engine.py` (Singleton `EnViT5Engine`):
-  - Tách bạch rõ phương thức `load_models()`, `translate()`, `clean_text()`.
-  - Bổ sung kiểm tra bộ nhớ & logging chi tiết thời gian xử lý AI.
+  - Tách bạch các phương thức suy luận, bổ sung ghi log thời gian xử lý AI và xử lý ngoại lệ `TranslationError`. [HOÀN THÀNH ✅]
 - **Bước 2.2**: Áp dụng Strategy Pattern cho OCR trong `core/ocr/`:
-  - Tạo `BaseOCREngine` khai báo phương thức trừu tượng `process_image(pil_img, lang)`.
-  - Chuyển Tesseract OCR hiện tại vào `TesseractOCREngine` với thuật toán xử lý ảnh OpenCV thông minh (tự động điều chỉnh theo độ phân giải & độ tương phản).
-  - Chuẩn hóa `EasyOCREngine` kế thừa từ `BaseOCREngine`.
-  - Xây dựng `OCRFactory` cho phép lấy engine dựa theo cấu hình cài đặt (`tesseract` / `easyocr`).
+  - Xây dựng `BaseOCREngine` (Abstract Base Class). [HOÀN THÀNH ✅]
+  - Chuẩn hóa `TesseractOCREngine` với tiền xử lý ảnh thích ứng (Adaptive Enhancement). [HOÀN THÀNH ✅]
+  - Chuẩn hóa `EasyOCREngine` xử lý bounding box theo dòng đọc tự nhiên. [HOÀN THÀNH ✅]
+  - Xây dựng `OCRFactory` khởi tạo engine linh hoạt theo cấu hình. [HOÀN THÀNH ✅]
+  - Cập nhật wrapper tương thích ngược cho `ocr_processor.py` và `easy_ocr_processor.py`. [HOÀN THÀNH ✅]
 
 ### 🔹 Giai đoạn 3: Tái cấu trúc Tầng GUI (Component-based & Loại bỏ Đa Thừa Kế)
 - **Bước 3.1**: Tách nhỏ giao diện phức tạp hiện tại:

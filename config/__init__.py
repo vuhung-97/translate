@@ -1,6 +1,6 @@
 """
-Tập tin adapter config.py hỗ trợ tương thích ngược cho toàn dự án.
-Ủy quyền cho config/config_manager.py.
+Package config quản lý cấu hình hệ thống và tùy chọn người dùng.
+Export các thành phần hằng số và ConfigManager cho toàn bộ ứng dụng.
 """
 
 from config.config_manager import (
@@ -10,7 +10,7 @@ from config.config_manager import (
     IS_WINDOWS,
 )
 
-# Export các hằng số đường dẫn
+# Export hằng số đường dẫn
 MODEL_DIR = config_manager.MODEL_DIR
 TESSERACT_DIR = config_manager.TESSERACT_DIR
 HELP_DIALOG_DIR = config_manager.HELP_DIALOG_DIR
@@ -21,7 +21,6 @@ ICON_PATH = config_manager.ICON_PATH
 EASYOCR_MODEL_DIR = config_manager.EASYOCR_MODEL_DIR
 SETTINGS_JSON_PATH = config_manager.SETTINGS_JSON_PATH
 
-# Export các hàm thao tác cài đặt tương thích ngược
 DEFAULT_SETTINGS = TranslationSettings().to_dict()
 SETTINGS = config_manager
 
