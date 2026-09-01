@@ -1,6 +1,6 @@
 # EnViT5 Smart Translator
 
-Ứng dụng dịch màn hình offline sử dụng PyQt5, Tesseract OCR và EnViT5 (CTranslate2).
+Ứng dụng dịch màn hình offline sử dụng PyQt6, easyOCR và EnViT5 (CTranslate2).
 
 ## Mục tiêu dự án
 
@@ -17,16 +17,16 @@
 ## Công nghệ sử dụng
 
 - Python 3.13
-- PyQt5
+- PyQt6
 - CTranslate2
 - sentencepiece
-- pytesseract, OpenCV, Pillow
+- easyOCR, OpenCV, Pillow
 
 ## Yêu cầu hệ thống
 
 - Windows 10/11 (đã kiểm thử chính trên Windows).
 - CPU phổ thông chạy tốt với thiết lập mặc định.
-- Cần giữ nguyên thư mục model và OCR đi kèm khi chạy app.
+- Cần giữ nguyên thư mục model đi kèm khi chạy app.
 
 ## Hướng dẫn chạy ở chế độ phát triển
 
@@ -81,11 +81,11 @@ Cấu hình mặc định được khai báo trong [`config.py`](config.py) tạ
 translate2/
 ├── main.py
 ├── config.py
-├── main.spec
+├── SmartTranslator_EnViT5_V2.spec
 ├── requirements.txt
 ├── core/
 │   ├── enviT5Application.py
-│   ├── ocr_processor.py
+│   ├── easy_ocr_processor.py
 │   ├── translation_engine.py
 │   ├── translation_service.py
 │   └── translation_worker.py
@@ -100,11 +100,11 @@ translate2/
 │   └── model_envit5_fast/
 │       ├── config.json
 │       ├── shared_vocabulary.json
-│       ├── spiece.model
-├── bin/
-│   └── Tesseract-OCR/
-│       ├── tessdata/
-│       └── ...
+│       └── spiece.model
+│   └──.EasyOCR
+│       └──model
+│           ├──craft_mlt_25k.pth
+|           └──latin_g2.pth
 ├── resources/
 └── settings.json
 ```
@@ -115,18 +115,65 @@ translate2/
 
 Chạy lệnh sau để đóng gói toàn bộ ứng dụng vào một thư mục (dist/SmartTranslator_EnViT5):
 
+- Lệnh build cho bản V1 dùng pytesseract
+
 ```powershell
 pyinstaller --noconfirm --onedir --noconsole `
-    --name "SmartTranslator_EnViT5" `
+    --name "SmartTranslator_EnViT5_V1" `
+    --icon "resources/app_icon.ico" `
     --add-data "models;models" `
-    --add-data "gui;gui" `
     --add-data "bin;bin" `
+    --add-data "gui;gui" `
     --add-data "core;core" `
     --add-data "controller;controller" `
     --add-data "settings.json;." `
     --add-data "resources;resources" `
+    --exclude-module "core.ocr_processor" `
+    --exclude-module "core.enviT5Application" `
+    --exclude-module "core.translation_engine" `
+    --exclude-module "core.translation_service" `
+    --exclude-module "core.translation_worker" `
+    --exclude-module "gui.theme_config" `
+    --exclude-module "gui.ui_components" `
+    --exclude-module "controller.event" `
+    --exclude-module "controller.smart_translator" `
     --collect-all ctranslate2 `
     --collect-all sentencepiece `
+    --collect-all pytesseract `
+    --collect-all PyQt6 `
+    --collect-all cv2 `
+    --collect-all numpy `
+    --hidden-import "PyQt6.QtCore" `
+    --hidden-import "PyQt6.QtWidgets" `
+    --hidden-import "PyQt6.QtGui" `
+    --clean `
+    main.py
+```
+
+- Lệnh build cho bản V2 dùng easyocr
+
+```powershell
+pyinstaller --noconfirm --onedir --noconsole `
+    --name "SmartTranslator_EnViT5_V2" `
+    --icon "resources/app_icon.ico" `
+    --add-data "models;models" `
+    --add-data "gui;gui" `
+    --add-data "core;core" `
+    --add-data "controller;controller" `
+    --add-data "settings.json;." `
+    --add-data "resources;resources" `
+    --exclude-module "core.easy_ocr_processor" `
+    --exclude-module "core.enviT5Application" `
+    --exclude-module "core.translation_engine" `
+    --exclude-module "core.translation_service" `
+    --exclude-module "core.translation_worker" `
+    --exclude-module "gui.theme_config" `
+    --exclude-module "gui.ui_components" `
+    --exclude-module "controller.event" `
+    --exclude-module "controller.smart_translator" `
+    --collect-all ctranslate2 `
+    --collect-all sentencepiece `
+    --collect-all easyocr `
     --collect-all PyQt6 `
     --hidden-import "PyQt6.QtCore" `
     --hidden-import "PyQt6.QtWidgets" `
@@ -135,19 +182,15 @@ pyinstaller --noconfirm --onedir --noconsole `
     main.py
 ```
 
-- Thư mục dist/SmartTranslator_EnViT5 sẽ chứa file thực thi và toàn bộ tài nguyên cần thiết.
+- Thư mục dist sẽ chứa file thực thi và toàn bộ tài nguyên cần thiết.
 - Khi chạy, cần giữ nguyên cấu trúc thư mục như trên.
-
-### Đóng gói thành 1 file
-
-Có thể dùng `--onefile`, nhưng thời gian khởi động sẽ lâu hơn và có thể gặp lỗi với các file dữ liệu lớn.
 
 ### Đóng gói bằng file spec
 
-Bạn có thể chỉnh sửa file [`main.spec`](main.spec) để tùy biến sâu hơn, sau đó build bằng:
+Bạn có thể build bằng file .spec:
 
 ```powershell
-pyinstaller .\main.spec
+pyinstaller ./SmartTranslator_EnViT5.spec
 ```
 
 ## Một số lỗi thường gặp

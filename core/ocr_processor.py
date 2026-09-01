@@ -4,33 +4,52 @@ Module này định nghĩa lớp OCRProcessor
 Dịch vụ xử lý hình ảnh và nhận diện chữ viết (OCR).
 """
 
+import os
 import re
 import cv2
 import numpy as np
+import pytesseract
 from PIL import Image
-from config import EASYOCR_MODEL_DIR
+from config import TESSERACT_EXE, TESSDATA_DIR
 
-class EasyOCRProcessor:
+class OCRProcessor:
     """
     Dịch vụ xử lý hình ảnh và nhận diện chữ viết (OCR).
-    Sử dụng EasyOCR làm công cụ cốt lõi. direction
+    Sử dụng Tesseract OCR làm công cụ cốt lõi.
     """
 
     def __init__(self):
-        import easyocr
-        # 1. Cấu hình hệ thống EasyOCR
-        self.reader = easyocr.Reader(
-			["en", "vi"],
-			model_storage_directory=str(EASYOCR_MODEL_DIR),
-			download_enabled=False,
-		)
+        # 1. Cấu hình hệ thống Tesseract
+        pytesseract.pytesseract.tesseract_cmd = TESSERACT_EXE
+        os.environ['TESSDATA_PREFIX'] = TESSDATA_DIR
+
+        # Cấu hình OCR mặc định: --psm 6 (Coi là 1 khối văn bản thống nhất)
+        self.tess_config = '--psm 6'
 
     def _prepare_cv2_image(self, pil_img: Image.Image) -> np.ndarray:
         """Chuyển đổi PIL Image sang OpenCV BGR format."""
         return cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
 
-    @staticmethod
-    def clean_text_formatting(raw_text: str) -> str:
+    def enhance_image(self, cv_img: np.ndarray) -> np.ndarray:
+        """
+        Quy trình tiền xử lý ảnh để tối ưu hóa nhận diện.
+        Gồm: Phóng to -> Thang xám -> Nhị phân hóa (Otsu).
+        """
+        # 1. Resize x2 giúp chữ rõ nét hơn (Cubic Interpolation)
+        img = cv2.resize(cv_img, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
+
+        # 2. Chuyển sang Grayscale
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+        # 3. Khử nhiễu nhẹ (Tùy chọn: giúp loại bỏ hạt nhiễu nhỏ trước khi nhị phân)
+        gray = cv2.medianBlur(gray, 3)
+
+        # 4. Otsu Thresholding (Nhị phân hóa)
+        _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+        return thresh
+
+    def clean_text_formatting(self, raw_text: str) -> str:
         """Hậu xử lý văn bản thô từ OCR để chuẩn hóa đầu ra."""
         if not raw_text:
             return ""
@@ -74,81 +93,18 @@ class EasyOCRProcessor:
         try:
             # Bước 1: Chuyển đổi và Tiền xử lý
             cv_img = self._prepare_cv2_image(pil_img)
+            processed_img = self.enhance_image(cv_img)
 
-            # Bước 2: Nhận diện bằng EasyOCR
-            result = self.run_ocr(cv_img)
+            # Bước 2: Nhận diện bằng Tesseract
+            raw_text = pytesseract.image_to_string(
+                processed_img,
+                lang=lang,
+                config=self.tess_config
+            )
 
             # Bước 3: Hậu xử lý văn bản
-            return self.clean_text_formatting(result)
+            return self.clean_text_formatting(raw_text)
 
         except (ValueError, RuntimeError) as e:
             print(f"❌ Critical OCR Error: {e}")
             return ""
-		
-    def run_ocr(self, cv_img):
-        try:
-            # Đọc ảnh bằng easyocr
-            result = self.reader.readtext(cv_img)
-
-            # Gom nội dung thành một câu văn hoàn chỉnh
-            merged_text = self._mergeText(result)
-
-            return merged_text
-        except Exception as exc:
-            return "OCR lỗi" + str(exc)
-
-    def _mergeText(self, result):
-        if not result:
-            return ""
-
-        items = []
-        for box, text, confidence in result:
-            clean = text.strip()
-            if not clean or confidence < 0.1:
-                continue
-
-            xs = [point[0] for point in box]
-            ys = [point[1] for point in box]
-            x_min = min(xs)
-            x_max = max(xs)
-            y_min = min(ys)
-            y_max = max(ys)
-            y_center = (y_min + y_max) / 2.0
-            height = max(1.0, y_max - y_min)
-
-            items.append(
-                {
-                    "text": clean,
-                    "x_min": x_min,
-                    "x_max": x_max,
-                    "y_center": y_center,
-                    "height": height,
-                }
-            )
-
-        if not items:
-            return ""
-
-        items.sort(key=lambda item: (item["y_center"], item["x_min"]))
-        average_height = sum(item["height"] for item in items) / len(items)
-        line_gap_threshold = max(10.0, average_height * 0.7)
-
-        lines = []
-        for item in items:
-            for line in lines:
-                if abs(item["y_center"] - line["y_center"]) <= line_gap_threshold:
-                    line["items"].append(item)
-                    count = len(line["items"])
-                    line["y_center"] = ((line["y_center"] * (count - 1)) + item["y_center"]) / count
-                    break
-            else:
-                lines.append({"y_center": item["y_center"], "items": [item]})
-
-        lines.sort(key=lambda line: line["y_center"])
-
-        ordered_parts = []
-        for line in lines:
-            line_items = sorted(line["items"], key=lambda item: item["x_min"])
-            ordered_parts.extend(item["text"] for item in line_items)
-
-        return " ".join(ordered_parts).strip()

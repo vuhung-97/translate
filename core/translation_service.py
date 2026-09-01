@@ -7,8 +7,9 @@ Nó giúp tách biệt hoàn toàn logic dịch thuật khỏi phần còn lại
 
 from PyQt6.QtCore import pyqtSignal, QObject
 
-# Các import từ dự án (giữ nguyên)
-from core.easy_ocr_processor import EasyOCRProcessor
+# Các import từ dự án
+# from core.easy_ocr_processor import EasyOCRProcessor
+from core.ocr_processor import OCRProcessor
 from core.translation_worker import TranslationResult, TranslationWorker
 # ================================================================
 # DỊCH THUẬT & OCR (LOGIC LAYER)
@@ -21,7 +22,7 @@ class TranslationService(QObject):
         super().__init__()
         self.settings = settings
         self._active_workers = []
-        self.ocr_processor = EasyOCRProcessor()
+        self.ocr_processor = OCRProcessor()
 
     def process_image(self, pil_img, target_label):
         """Thực hiện OCR và bắt đầu luồng dịch."""

@@ -19,11 +19,9 @@ class EnViT5_Application:
 
         model_dir = config.MODEL_DIR
         spiece_path = os.path.join(model_dir, "spiece.model")
-        print(f"[*] Model Dir: {model_dir}")
-        print(f"[*] Spiece Path: {spiece_path}")
 
         try:
-            # --- BƯỚC 1: NẠP SENTENCEPIECE TỪ BỘ NHỚ (GIẢI PHÁP MẠNH NHẤT) ---
+            # --- BƯỚC 1: NẠP SENTENCEPIECE ---
 
             print("\n[1/2] Dang nap SentencePiece...")
             tokenizer = spm.SentencePieceProcessor()
