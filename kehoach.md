@@ -86,14 +86,14 @@ translate2/
   - Xây dựng `OCRFactory` khởi tạo engine linh hoạt theo cấu hình. [HOÀN THÀNH ✅]
   - Cập nhật wrapper tương thích ngược cho `ocr_processor.py` và `easy_ocr_processor.py`. [HOÀN THÀNH ✅]
 
-### 🔹 Giai đoạn 3: Tái cấu trúc Tầng GUI (Component-based & Loại bỏ Đa Thừa Kế)
-- **Bước 3.1**: Tách nhỏ giao diện phức tạp hiện tại:
-  - `ToolbarWindow`: Thanh công cụ chính chứa nút Quét, Đổi chiều ngôn ngữ, Xóa, Cài đặt, Hướng dẫn, Tháo thoát.
-  - `SelectionOverlayWindow`: Cửa sổ chụp màn hình toàn màn hình riêng biệt, quản lý sự kiện kéo chọn chữ nhật và mờ nền.
-- **Bước 3.2**: Tách biệt `OverlayManager` thành `ResultOverlayManager`:
-  - Đóng gói logic tạo/xóa các khung hiển thị kết quả dịch (`QScrollArea`).
-  - Thêm tính năng hữu ích: Copy nhanh văn bản dịch, đóng khung khi click ra ngoài.
-- **Bước 3.3**: Chuẩn hóa `SettingsDialog` và `HelpDialog` độc lập với main window.
+### 🔹 Giai đoạn 3: Tái cấu trúc Tầng GUI (Component-based & Loại bỏ Đa Thừa Kế) - [HOÀN THÀNH ✅]
+- **Bước 3.1**: Tách nhỏ giao diện phức tạp hiện tại (loại bỏ đa thừa kế `SmartTranslator(MouseEvent, UIHandler)`):
+  - `ToolbarWindow` (`gui/windows/toolbar_window.py`): Thanh công cụ chính chứa nút Quét, Đổi chiều ngôn ngữ, Xóa, Cài đặt, Hướng dẫn, Tháo thoát. [HOÀN THÀNH ✅]
+  - `SelectionOverlayWindow` (`gui/windows/selection_window.py`): Cửa sổ chụp và chọn vùng mờ toàn màn hình. [HOÀN THÀNH ✅]
+- **Bước 3.2**: Tách biệt `OverlayManager` thành `ResultOverlayManager` (`gui/components/result_overlay.py`):
+  - Đóng gói logic tạo/xóa các khung hiển thị kết quả dịch (`QScrollArea`). [HOÀN THÀNH ✅]
+- **Bước 3.3**: Chuẩn hóa `SettingsDialog` (`gui/windows/settings_dialog.py`), `HelpDialog` (`gui/windows/help_dialog.py`), `ThemeConfig` (`gui/theme.py`) thành các module chuyên biệt. [HOÀN THÀNH ✅]
+- **Bước 3.4**: Refactor `SmartTranslator` (`controller/smart_translator.py`) đóng vai trò Controller kết nối UI mượt mà không dùng đa thừa kế. [HOÀN THÀNH ✅]
 
 ### 🔹 Giai đoạn 4: Tầng Service & Luồng xử lý Bất đồng bộ (Async Workers)
 - **Bước 4.1**: Tái cấu trúc `TranslationWorker(QThread)`:

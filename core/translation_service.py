@@ -1,45 +1,63 @@
-# pylint: disable=no-name-in-module, import-error, too-few-public-methods
 """
-Module này định nghĩa lớp TranslationService
-Một lớp trung gian chuyên xử lý logic chuyển đổi từ Ảnh -> Chữ -> Bản dịch.
-Nó giúp tách biệt hoàn toàn logic dịch thuật khỏi phần còn lại của ứng dụng
+Module định nghĩa TranslationService.
+Điều phối quy trình Ảnh -> OCR -> AI Translation -> Cập nhật UI.
 """
 
 from PyQt6.QtCore import pyqtSignal, QObject
+from PIL import Image
 
-# Các import từ dự án
-# from core.easy_ocr_processor import EasyOCRProcessor
-from core.ocr_processor import OCRProcessor
+from core.ocr.factory import OCRFactory
 from core.translation_worker import TranslationResult, TranslationWorker
-# ================================================================
-# DỊCH THUẬT & OCR (LOGIC LAYER)
-# ================================================================
+from utils.logger import logger
+
+
 class TranslationService(QObject):
-    """Chuyên xử lý logic chuyển đổi từ Ảnh -> Chữ -> Bản dịch."""
-    translation_ready = pyqtSignal(str, object)  # Trả về (văn bản dịch, label cần cập nhật)
+    """
+    Service điều phối quy trình dịch thuật từ hình ảnh tới văn bản hoàn chỉnh.
+    """
+    translation_ready = pyqtSignal(str, object)
 
-    def __init__(self, settings):
+    def __init__(self, config_or_settings):
         super().__init__()
-        self.settings = settings
+        self.settings = config_or_settings
         self._active_workers = []
-        self.ocr_processor = OCRProcessor()
 
-    def process_image(self, pil_img, target_label):
-        """Thực hiện OCR và bắt đầu luồng dịch."""
-        text = self.ocr_processor.process(
-            pil_img,
-            lang='vie' if self.settings.get('direction') == 'vi-en' else 'eng')
+    def process_image(self, pil_img: Image.Image, target_label):
+        """
+        Thực hiện OCR dựa theo OCR Engine được cấu hình và bắt đầu luồng dịch AI.
+        """
+        try:
+            # 1. Lấy OCR Engine từ Factory dựa trên settings hiện tại
+            ocr_engine_name = self.settings.get("ocr_engine", "tesseract")
+            ocr_engine = OCRFactory.get_engine(ocr_engine_name)
 
-        if text.strip():
-            self._start_worker(text, target_label)
-        else:
-            target_label.setText("Không tìm thấy chữ!")
+            direction = self.settings.get("direction", "en-vi")
+            lang = "vie" if direction == "vi-en" else "eng"
 
-    def _start_worker(self, text, target_label):
+            # 2. Chạy OCR nhận diện chữ
+            text = ocr_engine.process(pil_img, lang=lang)
+
+            if text and text.strip():
+                self._start_worker(text, target_label)
+            else:
+                logger.info("OCR không nhận diện được chữ nào trong ảnh.")
+                target_label.setText("Không tìm thấy chữ!")
+
+        except Exception as e:
+            logger.error(f"Lỗi trong quá trình xử lý ảnh Dịch thuật: {e}", exc_info=True)
+            target_label.setText(f"⚠️ Lỗi OCR: {e}")
+
+    def _start_worker(self, text: str, target_label):
+        """Khởi động QThread dịch thuật trong nền."""
         result = TranslationResult(text=text, x=0, y=0, width=0)
-        worker = TranslationWorker(result, self.settings)
-        worker.finished.connect(lambda result, _x, _y, _w: target_label.setText(result))
-        worker.finished.connect(lambda _result, _x, _y, _w: self._cleanup_worker(worker))
+        
+        # Lấy dict settings
+        settings_dict = self.settings.settings.to_dict() if hasattr(self.settings, "settings") else self.settings
+        
+        worker = TranslationWorker(result, settings_dict)
+        worker.finished.connect(lambda res_text, _x, _y, _w: target_label.setText(res_text))
+        worker.finished.connect(lambda _res, _x, _y, _w: self._cleanup_worker(worker))
+        
         self._active_workers.append(worker)
         worker.start()
 
