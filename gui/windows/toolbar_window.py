@@ -1,6 +1,6 @@
 """
 ToolbarWindow: Thanh công cụ điều khiển chính của SmartTranslator.
-Thiết kế gọn nhẹ, hỗ trợ di chuyển window mượt mà.
+Thiết kế gọn nhẹ, hỗ trợ di chuyển window và phím tắt bàn phím (Esc, Space, Enter).
 """
 
 from PyQt6.QtCore import Qt, QPoint, pyqtSignal
@@ -30,6 +30,7 @@ class ToolbarWindow(QWidget):
             Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
         self._drag_offset: QPoint = None
         self._init_ui()
@@ -59,6 +60,8 @@ class ToolbarWindow(QWidget):
             self.btn_exit,
         ]
         for w in widgets:
+            # Ngăn nút bấm cướp Focus bàn phím để phím tắt Space, Esc, Enter luôn hoạt động đúng
+            w.setFocusPolicy(Qt.FocusPolicy.NoFocus)
             layout.addWidget(w)
 
         # Connect internal signals
@@ -113,6 +116,20 @@ class ToolbarWindow(QWidget):
         self.btn_help.setStyleSheet(f"background-color: {btn_colors['help']};")
         self.btn_settings.setStyleSheet(f"background-color: {btn_colors['settings']};")
         self.btn_exit.setStyleSheet(f"background-color: {btn_colors['exit']};")
+
+    def keyPressEvent(self, event):
+        """Xử lý các phím tắt bàn phím toàn cục cho Toolbar."""
+        if event.key() == Qt.Key.Key_Escape:
+            self.scan_toggled.emit()
+            event.accept()
+        elif event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            self.clear_clicked.emit()
+            event.accept()
+        elif event.key() == Qt.Key.Key_Space:
+            self.direction_switched.emit()
+            event.accept()
+        else:
+            super().keyPressEvent(event)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:

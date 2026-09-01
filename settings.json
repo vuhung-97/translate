@@ -1,10 +1,10 @@
 {
     "direction": "vi-en",
-    "ocr_engine": "easyocr",
+    "ocr_engine": "tesseract",
     "beam_size": 9,
-    "repetition_penalty": 1.8000000000000003,
+    "repetition_penalty": 1.8,
     "no_repeat_ngram_size": 4,
     "max_decoding_length": 256,
-    "font_size": 17,
-    "theme": "Sáng"
+    "font_size": 14,
+    "theme": "Tối"
 }

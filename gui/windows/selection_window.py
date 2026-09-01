@@ -4,6 +4,7 @@ Hỗ trợ High-DPI Scaling, Đa màn hình (Multi-Monitor) và giữ nguyên l�
 """
 
 import io
+import time
 from PIL import Image
 from PyQt6.QtCore import Qt, QPoint, QRect, QBuffer, QIODevice, pyqtSignal
 from PyQt6.QtGui import QPainter, QColor, QPen, QPixmap, QCursor, QGuiApplication
@@ -23,7 +24,7 @@ class SelectionOverlayWindow(QWidget):
     clear_requested = pyqtSignal()
     direction_switch_requested = pyqtSignal()
 
-    def __init__(self, toolbar_rect_provider=None):
+    def __init__(self, toolbar_rect_provider=None, result_rects_provider=None):
         super().__init__()
         self.setWindowFlags(
             Qt.WindowType.FramelessWindowHint |
@@ -33,11 +34,17 @@ class SelectionOverlayWindow(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         
         self.toolbar_rect_provider = toolbar_rect_provider
+        self.result_rects_provider = result_rects_provider
         self._is_selecting = False
         self._start_pt = QPoint()
         self._end_pt = QPoint()
         self._snapshot: QPixmap = QPixmap()
         self._screen_rect: QRect = QRect()
+        self._ignore_click_until: float = 0.0
+
+    def set_click_cooldown(self, duration_sec: float = 0.3):
+        """Thiết lập khoảng thời gian tạm ngưng nhận click chuột (Cooldown)."""
+        self._ignore_click_until = time.time() + duration_sec
 
     def start_selection(self):
         """Khởi động chế độ quét màn hình thích ứng Đa màn hình (Multi-Monitor)."""
@@ -73,17 +80,43 @@ class SelectionOverlayWindow(QWidget):
             )
 
     def mousePressEvent(self, event):
+        if time.time() < self._ignore_click_until:
+            return
+
         if event.button() == Qt.MouseButton.LeftButton:
-            # Nếu vị trí click nằm trong vùng Toolbar Window thì không chọn
+            click_pos = event.globalPosition().toPoint()
+
+            # 1. Nếu vị trí click nằm trong vùng Toolbar Window thì không chọn
             if self.toolbar_rect_provider:
                 toolbar_rect = self.toolbar_rect_provider()
-                if toolbar_rect.contains(event.globalPosition().toPoint()):
+                if toolbar_rect.contains(click_pos):
                     return
+
+            # 2. Nếu vị trí click nằm trong bất kỳ ô bản dịch nổi nào thì không chọn
+            if self.result_rects_provider:
+                for res_rect in self.result_rects_provider():
+                    if res_rect.contains(click_pos):
+                        return
 
             self._is_selecting = True
             self._start_pt = event.pos()
             self._end_pt = event.pos()
             self.update()
+
+    def mouseDoubleClickEvent(self, event):
+        if time.time() < self._ignore_click_until:
+            return
+
+        if event.button() == Qt.MouseButton.LeftButton:
+            click_pos = event.globalPosition().toPoint()
+
+            if self.toolbar_rect_provider and self.toolbar_rect_provider().contains(click_pos):
+                return
+
+            if self.result_rects_provider:
+                for res_rect in self.result_rects_provider():
+                    if res_rect.contains(click_pos):
+                        return
 
     def mouseMoveEvent(self, event):
         if self._is_selecting:

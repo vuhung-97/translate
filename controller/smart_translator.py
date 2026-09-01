@@ -25,7 +25,10 @@ class SmartTranslator(ToolbarWindow):
         super().__init__()
 
         # 1. Khởi tạo các thành phần chuyên biệt (Composition)
-        self.overlay_manager = ResultOverlayManager(parent_widget=None)
+        self.overlay_manager = ResultOverlayManager(
+            parent_widget=None,
+            box_closed_callback=self._on_box_closed
+        )
         self.trans_service = TranslationService(config_manager)
         self.selection_window = None
         self._is_scanning = False
@@ -48,6 +51,13 @@ class SmartTranslator(ToolbarWindow):
         self.settings_clicked.connect(self._open_settings)
         self.exit_clicked.connect(QApplication.quit)
 
+    def _on_box_closed(self):
+        """Xử lý dọn dẹp Z-Order và ngưng nhận click khi 1 ô bản dịch bị nhấp đúp xóa."""
+        self.overlay_manager.raise_all()
+        self.raise_()
+        if self.selection_window is not None:
+            self.selection_window.set_click_cooldown(0.3)
+
     def _toggle_scan_mode(self):
         """Khởi động hoặc thu nhỏ chế độ quét màn hình."""
         if self._is_scanning:
@@ -66,9 +76,10 @@ class SmartTranslator(ToolbarWindow):
         self._is_scanning = True
         self.btn_quet_toggle.setText("🔙 Thu nhỏ (Esc)")
 
-        # Tạo SelectionOverlayWindow với provider vị trí Toolbar
+        # Tạo SelectionOverlayWindow với provider vị trí Toolbar và vị trí các ô bản dịch
         self.selection_window = SelectionOverlayWindow(
-            toolbar_rect_provider=lambda: self.frameGeometry()
+            toolbar_rect_provider=lambda: self.frameGeometry(),
+            result_rects_provider=lambda: self.overlay_manager.get_result_rects()
         )
         self.selection_window.selection_completed.connect(self._on_selection_completed)
         self.selection_window.cancelled.connect(self._on_selection_cancelled)
@@ -77,7 +88,8 @@ class SmartTranslator(ToolbarWindow):
         
         self.selection_window.start_selection()
 
-        # Đưa ToolbarWindow lên trên cùng của lớp phủ mờ để tương tác nút bấm
+        # Đẩy tất cả ô bản dịch cũ và ToolbarWindow lên trên cùng của lớp phủ mờ
+        self.overlay_manager.raise_all()
         self.raise_()
         self.activateWindow()
 
@@ -102,7 +114,8 @@ class SmartTranslator(ToolbarWindow):
             rect=rect, font_size=font_size, theme_name=theme_name
         )
 
-        # Đảm bảo Toolbar luôn nổi trên cùng
+        # Đảm bảo các ô bản dịch và Toolbar luôn nổi trên lớp phủ mờ
+        self.overlay_manager.raise_all()
         self.raise_()
 
         # 2. Gọi TranslationService để nhận diện OCR và dịch thuật
@@ -119,6 +132,10 @@ class SmartTranslator(ToolbarWindow):
         
         config_manager["direction"] = new_direction
         self.apply_theme()
+        
+        # Đẩy tất cả các ô bản dịch và Toolbar lên trên lớp phủ mờ
+        self.overlay_manager.raise_all()
+        self.raise_()
         logger.info(f"Đã chuyển hướng dịch sang: {new_direction}")
 
     def _open_help(self):
@@ -131,3 +148,5 @@ class SmartTranslator(ToolbarWindow):
         dialog = SettingsDialog(config_manager.settings.to_dict(), self)
         if dialog.exec():
             self.apply_theme()
+            self.overlay_manager.raise_all()
+            self.raise_()

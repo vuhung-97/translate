@@ -1,41 +1,48 @@
 """
 Định nghĩa các Custom Exceptions cho ứng dụng SmartTranslator.
-Giúp dễ dàng phân loại, khoanh vùng và xử lý lỗi cụ thể.
+Phân loại, khoanh vùng và hỗ trợ thông điệp báo lỗi chi tiết cho từng tác vụ.
 """
 
+from typing import Optional
+
+
 class SmartTranslatorError(Exception):
-    """Lớp ngoại lệ cơ sở cho toàn bộ ứng dụng."""
-    def __init__(self, message: str, original_exception: Exception = None):
-        super().__init__(message)
-        self.message = message
+    """Lớp ngoại lệ cơ sở cho toàn bộ ứng dụng SmartTranslator."""
+    
+    default_message: str = "Đã xảy ra lỗi không xác định trong hệ thống SmartTranslator."
+
+    def __init__(self, message: Optional[str] = None, original_exception: Optional[Exception] = None):
+        msg = message if message else self.default_message
+        super().__init__(msg)
+        self.message = msg
         self.original_exception = original_exception
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.original_exception:
-            return f"{self.message} (Lỗi gốc: {self.original_exception})"
+            return f"{self.message} | Lỗi gốc: {type(self.original_exception).__name__}: {self.original_exception}"
         return self.message
 
 
 class ConfigError(SmartTranslatorError):
-    """Ngoại lệ liên quan đến việc nạp/lưu cấu hình cài đặt."""
-    pass
+    """Ngoại lệ xảy ra trong quá trình nạp, lưu hoặc đọc file cấu hình settings.json."""
+    default_message = "Lỗi thao tác với file cấu hình hệ thống."
 
 
 class ModelNotFoundError(SmartTranslatorError):
-    """Không tìm thấy file mô hình AI hoặc OCR."""
-    pass
+    """Ngoại lệ xảy ra khi không tìm thấy file trọng số mô hình AI hoặc OCR."""
+    default_message = "Không tìm thấy file tài nguyên mô hình AI/OCR."
 
 
 class AIModelLoadError(SmartTranslatorError):
-    """Xảy ra lỗi khi nạp mô hình CTranslate2 hoặc Tokenizer."""
-    pass
+    """Ngoại lệ xảy ra khi nạp mô hình CTranslate2 hoặc SentencePiece Tokenizer thất bại."""
+    default_message = "Nạp mô hình suy luận CTranslate2/Tokenizer thất bại."
 
 
 class OCRError(SmartTranslatorError):
-    """Lỗi xảy ra trong quá trình nhận diện hình ảnh (OCR)."""
-    pass
+    """Ngoại lệ xảy ra trong quá trình xử lý hình ảnh hoặc nhận diện chữ OCR."""
+    default_message = "Xử lý nhận diện chữ OCR thất bại."
 
 
 class TranslationError(SmartTranslatorError):
-    """Lỗi xảy ra trong quá trình dịch thuật AI."""
-    pass
+    """Ngoại lệ xảy ra trong quá trình suy luận dịch thuật AI EnViT5."""
+    default_message = "Suy luận dịch thuật AI thất bại."

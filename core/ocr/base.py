@@ -41,7 +41,7 @@ class BaseOCREngine(ABC):
         # 2. Loại bỏ các ký tự rác không phải Unicode từ/dấu câu
         raw_text = re.sub(r'[^\w .!?:;,\"\'\(\)\[\]\{\}\-]+', '', raw_text, flags=re.UNICODE)
 
-        # 3. Chuẩn hóa khoảng trắng dư thừa
+        # 3. Chuẩn hóa khoảng trắng dư thừa REFACTOR CODE AND LOGIC
         raw_text = " ".join(raw_text.split())
 
         # 4. Loại bỏ dấu câu nhiễu ở đầu câu
