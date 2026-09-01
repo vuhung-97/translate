@@ -43,12 +43,16 @@ class ResultOverlayManager:
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         scroll.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
 
-        # Thiết lập QSS cho ScrollArea
+        # Thiết lập QSS cho ScrollArea và Viewport với màu nền rắn
         scroll.setStyleSheet(f"""
             QScrollArea {{
                 border: 2px solid {colors['accent']};
                 border-radius: 10px;
-                background: {colors['bg']};
+                background-color: {colors['bg']};
+            }}
+            QWidget#qt_scrollarea_viewport {{
+                background-color: {colors['bg']};
+                border-radius: 8px;
             }}
             QScrollBar:vertical {{
                 background: transparent;
@@ -68,7 +72,7 @@ class ResultOverlayManager:
             color: {colors['text']};
             font-size: {font_size}px;
             padding: 8px;
-            background: transparent;
+            background-color: {colors['bg']};
         """)
 
         scroll.setWidget(label)

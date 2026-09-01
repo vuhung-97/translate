@@ -93,8 +93,7 @@ class SmartTranslator(ToolbarWindow):
             self.selection_window = None
 
     def _on_selection_completed(self, pil_img, rect: QRect):
-        """Xử lý khi người dùng hoàn thành việc khoanh vùng chữ trên màn hình."""
-        self._close_scan_mode()
+        """Xử lý khi người dùng hoàn thành việc khoanh vùng chữ trên màn hình (giữ nguyên lớp phủ mờ)."""
         font_size = config_manager.get("font_size", 17)
         theme_name = config_manager.get("theme", "Sáng")
 
@@ -102,6 +101,9 @@ class SmartTranslator(ToolbarWindow):
         target_label = self.overlay_manager.create_result_box(
             rect=rect, font_size=font_size, theme_name=theme_name
         )
+
+        # Đảm bảo Toolbar luôn nổi trên cùng
+        self.raise_()
 
         # 2. Gọi TranslationService để nhận diện OCR và dịch thuật
         self.trans_service.process_image(pil_img, target_label)

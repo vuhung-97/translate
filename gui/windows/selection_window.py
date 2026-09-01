@@ -1,6 +1,6 @@
 """
 Cửa sổ lớp phủ toàn màn hình (SelectionOverlayWindow) xử lý việc chọn vùng màn hình cần dịch.
-Hỗ trợ High-DPI Scaling, Đa màn hình (Multi-Monitor) và khóa cứng dữ liệu ảnh khoanh vùng.
+Hỗ trợ High-DPI Scaling, Đa màn hình (Multi-Monitor) và giữ nguyên lớp phủ mờ khi khoanh vùng xong.
 """
 
 import io
@@ -115,7 +115,8 @@ class SelectionOverlayWindow(QWidget):
                 # KHÓA CỨNG ĐIỂM ẢNH TRONG BỘ NHỚ RAM TRÁNH LAZY LOADING CỦA PIL
                 pil_img = Image.open(io.BytesIO(raw_bytes)).convert("RGB").copy()
 
-                self.close()
+                # Giữ nguyên SelectionOverlayWindow (không đóng tự động)
+                self.update()
                 self.selection_completed.emit(pil_img, rect)
             else:
                 self.update()
