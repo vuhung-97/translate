@@ -1,11 +1,12 @@
 """
 Cửa sổ lớp phủ toàn màn hình (SelectionOverlayWindow) xử lý việc chọn vùng màn hình cần dịch.
+Hỗ trợ High-DPI Scaling và Đa màn hình (Multi-Monitor).
 """
 
 import io
 from PIL import Image
 from PyQt6.QtCore import Qt, QPoint, QRect, QBuffer, QIODevice, pyqtSignal
-from PyQt6.QtGui import QPainter, QColor, QPen, QPixmap
+from PyQt6.QtGui import QPainter, QColor, QPen, QPixmap, QCursor, QGuiApplication
 from PyQt6.QtWidgets import QWidget, QApplication
 
 from utils.logger import logger
@@ -16,7 +17,7 @@ class SelectionOverlayWindow(QWidget):
     Cửa sổ phủ toàn màn hình hỗ trợ kéo thả chọn vùng dịch (Scan Mode).
     """
 
-    # Signal phát ra khi kéo chọn thành công: (PIL Image, QRect vùng chọn)
+    # Signals
     selection_completed = pyqtSignal(object, QRect)
     cancelled = pyqtSignal()
     clear_requested = pyqtSignal()
@@ -35,22 +36,28 @@ class SelectionOverlayWindow(QWidget):
         self._start_pt = QPoint()
         self._end_pt = QPoint()
         self._snapshot: QPixmap = QPixmap()
+        self._screen_rect: QRect = QRect()
 
     def start_selection(self):
-        """Khởi động chế độ quét màn hình."""
-        # Chụp ảnh toàn bộ màn hình trước khi hiển thị overlay
-        self.setWindowOpacity(0)
-        QApplication.processEvents()
-        screen = QApplication.primaryScreen()
+        """Khởi động chế độ quét màn hình thích ứng Đa màn hình (Multi-Monitor)."""
+        cursor_pos = QCursor.pos()
+        screen = QGuiApplication.screenAt(cursor_pos) or QGuiApplication.primaryScreen()
+        
         if screen:
+            self._screen_rect = screen.geometry()
+            self.setGeometry(self._screen_rect)
+            
+            self.setWindowOpacity(0)
+            QApplication.processEvents()
+            
+            # Grab window screenshot for the selected screen
             self._snapshot = screen.grabWindow(0)
-            self.setGeometry(screen.geometry())
+            logger.info(f"Đã chụp snapshot màn hình '{screen.name()}' size={self._snapshot.width()}x{self._snapshot.height()}")
 
         self.setWindowOpacity(1)
         self.showFullScreen()
         self.setFocus()
         self.update()
-        logger.info("Khởi chạy SelectionOverlayWindow ở chế độ Full Screen Scan.")
 
     def paintEvent(self, event):
         """Vẽ lớp phủ mờ và khung chọn nét đứt."""
@@ -82,8 +89,16 @@ class SelectionOverlayWindow(QWidget):
             rect = QRect(self._start_pt, self._end_pt).normalized()
             
             if rect.width() >= 10 and rect.height() >= 10 and not self._snapshot.isNull():
-                # Cắt ảnh từ snapshot
-                cropped_pixmap = self._snapshot.copy(rect)
+                # Xử lý tỉ lệ High DPI Scaling nếu có
+                dpr = self.devicePixelRatio()
+                crop_rect = QRect(
+                    int(rect.x() * dpr),
+                    int(rect.y() * dpr),
+                    int(rect.width() * dpr),
+                    int(rect.height() * dpr)
+                )
+
+                cropped_pixmap = self._snapshot.copy(crop_rect)
                 buffer = QBuffer()
                 buffer.open(QIODevice.OpenModeFlag.ReadWrite)
                 cropped_pixmap.save(buffer, "PNG")

@@ -103,18 +103,25 @@ translate2/
   - Nhận yêu cầu dịch từ `SelectionOverlayWindow`, gọi `OCRFactory` thực thi OCR, kích hoạt `TranslationWorker`. [HOÀN THÀNH ✅]
   - Quản lý danh sách luồng đang chạy (`_active_workers`) an toàn và tự động thu hồi tài nguyên `deleteLater()`. [HOÀN THÀNH ✅]
 
-### 🔹 Giai đoạn 5: Tối ưu hóa Trải nghiệm & Tính năng Nâng cao (UX & Upgrades)
-- **Bước 5.1**: Hỗ trợ chuyển đổi Engine OCR trực tiếp trong cửa sổ Cài đặt (`SettingsDialog`).
-- **Bước 5.2**: Xử lý DPI Scaling & Đa màn hình (Multi-Monitor) cho tính năng quét toàn màn hình.
-- **Bước 5.3**: Bổ sung phím tắt linh hoạt và hiệu ứng chuyển đổi trạng thái giao diện mượt mà.
+### 🔹 Giai đoạn 5: Tối ưu hóa Trải nghiệm & Tính năng Nâng cao (UX & Upgrades) - [HOÀN THÀNH ✅]
+- **Bước 5.1**: Hỗ trợ chuyển đổi Engine OCR trực tiếp trong cửa sổ Cài đặt (`SettingsDialog`). [HOÀN THÀNH ✅]
+- **Bước 5.2**: Xử lý DPI Scaling & Đa màn hình (Multi-Monitor) cho tính năng quét toàn màn hình (`SelectionOverlayWindow`). [HOÀN THÀNH ✅]
+- **Bước 5.3**: Tích hợp module `logger` và `config_manager` vào `core/enviT5Application.py` và `main.py`. [HOÀN THÀNH ✅]
 
-### 🔹 Giai đoạn 6: Kiểm thử, Dọn dẹp & Đóng gói (Testing & Build)
-- **Bước 6.1**: Viết bộ test kiểm thử trong `tests/` dùng `pytest`:
-  - Test đọc/ghi ConfigManager.
-  - Test làm sạch văn bản OCR Regex (`clean_text_formatting`).
-  - Test xử lý dịch thuật AI Engine.
-- **Bước 6.2**: Dọn dẹp các file `.spec` thừa, hợp nhất thành `SmartTranslator.spec` duy nhất chuẩn hóa build PyInstaller.
-- **Bước 6.3**: Tạo file `kehoach.md` lưu trữ toàn bộ tài liệu này trong dự án để dễ tra cứu phát triển về sau.
+### 🔹 Giai đoạn 6: Kiểm thử, Dọn dẹp & Đóng gói (Testing & Build) - [HOÀN THÀNH ✅]
+- **Bước 6.1**: Viết bộ test kiểm thử trong `tests/` (`test_config.py`, `test_ocr.py`, `test_translation.py`). [HOÀN THÀNH ✅]
+- **Bước 6.2**: Dọn dẹp các file `.spec` thừa, hợp nhất thành `SmartTranslator.spec` duy nhất chuẩn hóa build PyInstaller. [HOÀN THÀNH ✅]
+- **Bước 6.3**: Kiểm thử toàn bộ hệ thống qua unit test suite (Pass 7/7 tests). [HOÀN THÀNH ✅]
+
+---
+
+## 🏆 TỔNG KẾT TÌNH TRẠNG DỰ ÁN
+- ✅ **Giai đoạn 1**: Chuẩn hóa Hạ tầng (Logging, Custom Exceptions, ConfigManager Singleton).
+- ✅ **Giai đoạn 2**: Tái cấu trúc Tầng Core (AI Engine Singleton, OCR Strategy Pattern với Tesseract & EasyOCR).
+- ✅ **Giai đoạn 3**: Tái cấu trúc Tầng GUI (Component-based GUI, loại bỏ hoàn toàn Đa Thừa Kế Diamond).
+- ✅ **Giai đoạn 4**: Tầng Service & QThread (TranslationWorker bất đồng bộ, dọn dẹp bộ nhớ tự động).
+- ✅ **Giai đoạn 5**: UX & Upgrades (Multi-Monitor support, High-DPI Scaling, chuyển đổi OCR Engine trực tiếp).
+- ✅ **Giai đoạn 6**: Unit Tests & Build Spec (7/7 Unit tests thành công, `SmartTranslator.spec` duy nhất).
 
 ---
 

@@ -1,78 +1,77 @@
-# 1. IMPORT CÁC THƯ VIỆN CẦN THIẾT
+"""
+Khởi tạo toàn bộ ứng dụng EnViT5 Smart Translator.
+Quản lý vòng đời khởi chạy tài nguyên AI và QApplication PyQt6.
+"""
+
 import os
 import sys
+import sentencepiece as spm
+import ctranslate2
+
+from config import config_manager
+from core.translation_engine import ai_engine
+from utils.logger import logger
+from utils.exceptions import AIModelLoadError
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
-# Ngăn Qt can thiệp vào bộ nhớ trước khi AI sẵn sàng
 os.environ["QT_NO_LIBREALSENSE"] = "1"
-
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 
-import sentencepiece as spm
-import ctranslate2 
-import config
 
 class EnViT5_Application:
-    # 2. KHỞI TẠO TÀI NGUYÊN AI
-    def load_ai_assets(self):
-        print("[DEBUG] Đang nạp BỘ NÃO AI...", flush=True)
+    """
+    Class quản lý vòng đời nạp mô hình AI và khởi chạy giao diện ứng dụng.
+    """
 
-        model_dir = config.MODEL_DIR
+    def load_ai_assets(self):
+        """Nạp SentencePiece Tokenizer và CTranslate2 Translator."""
+        logger.info("Đang bắt đầu nạp tài nguyên mô hình AI...")
+
+        model_dir = config_manager.MODEL_DIR
         spiece_path = os.path.join(model_dir, "spiece.model")
 
+        if not os.path.exists(spiece_path):
+            raise AIModelLoadError(f"Không tìm thấy file mô hình spiece.model tại {spiece_path}")
+
         try:
-            # --- BƯỚC 1: NẠP SENTENCEPIECE ---
-
-            print("\n[1/2] Dang nap SentencePiece...")
+            # 1. Nạp SentencePiece
+            logger.info("Nạp SentencePiece Tokenizer...")
             tokenizer = spm.SentencePieceProcessor()
-
             with open(spiece_path, "rb") as f:
                 model_bytes = f.read()
-
             tokenizer.load_from_serialized_proto(model_bytes)
+            logger.info("SentencePiece Tokenizer: OK!")
 
-            # tokenizer.load(spiece_path)
-            print("✅ SentencePiece: OK!")
-
-            # --- BƯỚC 2: NẠP TRANSLATOR ---
-            print("\n[2/2] Dang nap CTranslate2 Translator...")
-            
+            # 2. Nạp CTranslate2 Translator
+            logger.info("Nạp CTranslate2 Translator...")
             translator = ctranslate2.Translator(
-                str(model_dir), 
-                device="cpu", 
+                str(model_dir),
+                device="cpu",
                 compute_type="int8",
-                inter_threads=1, 
-                intra_threads=4 
+                inter_threads=1,
+                intra_threads=4
             )
-            
-            print("✅ CTranslate2: OK!", flush=True)
+            logger.info("CTranslate2 Translator: OK!")
 
-            from core.translation_engine import ai_engine
+            # 3. Gán vào Engine trung tâm
             ai_engine.set_models(translator, tokenizer)
-            
+            logger.info("Tất cả tài nguyên AI đã nạp thành công.")
+
         except Exception as e:
-            import traceback
-            traceback.print_exc()
-            print(f"❌ Lỗi: {e}", flush=True)
+            logger.error(f"Lỗi khi nạp tài nguyên AI: {e}", exc_info=True)
             sys.exit(1)
 
-    # 3. ĐIỀU PHỐI HỆ THỐNG VÀ GIAO DIỆN
     def bootstrap_application(self):
-        """Khởi động toàn bộ thành phần hệ thống và giao diện."""
-
-        # --- Khởi chạy Giao diện người dùng ---
-        # Kích hoạt chế độ hỗ trợ màn hình độ phân giải cao (High DPI)
-        
+        """Khởi chạy ứng dụng PyQt6 và Controller chính."""
         from PyQt6.QtWidgets import QApplication
         from PyQt6.QtGui import QIcon
-        from config import ICON_PATH
-
-        app = QApplication(sys.argv)
-        app.setWindowIcon(QIcon(ICON_PATH))  # Thêm icon cho ứng dụng
-
-        # Nạp giao diện chính từ main_window.py
         from controller.smart_translator import SmartTranslator
-        main_window = SmartTranslator() 
+
+        logger.info("Khởi động giao diện PyQt6...")
+        app = QApplication(sys.argv)
         
-        # Bắt đầu vòng lặp sự kiện của ứng dụng
+        if os.path.exists(config_manager.ICON_PATH):
+            app.setWindowIcon(QIcon(config_manager.ICON_PATH))
+
+        main_window = SmartTranslator()
         sys.exit(app.exec())
